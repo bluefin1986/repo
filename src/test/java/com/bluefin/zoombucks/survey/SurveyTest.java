@@ -51,7 +51,7 @@ public class SurveyTest {
 //			fp.addExtension(proxyExtension);
 			FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
 //			FirefoxDriver firefoxDriver = new FirefoxDriver(cap);
-			firefoxDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+			firefoxDriver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
 			driverList.add(firefoxDriver);
 //			driverList.add(new SafariDriver(cap));
 		}
@@ -71,8 +71,8 @@ public class SurveyTest {
 					login(account, driver);
 //					testZoomBucksTask(account,driver);
 					//surveys
-						testZoomBucksSurvey(account,driver);
-//			testWatchVideo(account, driver);
+//					testZoomBucksSurvey(account,driver);
+					testWatchVideo(account, driver);
 //					} catch (InterruptedException e) {
 //						e.printStackTrace();
 //					} catch (Exception ex){
@@ -105,8 +105,26 @@ public class SurveyTest {
 	
 	
 	public void testWatchVideo(String account, WebDriver driver){
-		login(account, driver);
-		driver.get(baseUrl + "/includes/video_homepage.php?reward=2%20ZBucks");
+		String earnUrl = "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
+		String url = "https://embed.jungroup.com/embedded_videos/catalog_frame?uid=" + account + "&site=ZoomBucks&pid=4716234&sub_id=&reward=2%20ZBucks";
+		boolean finished = false;
+		int count = 0;
+		while(count < 10 && !finished){
+			try {
+				driver.get(earnUrl);
+				WebElement bodyContent = driver.findElement(By.tagName("body"));
+				String content = bodyContent.getText();
+				if("No Videos available.".equals(content.trim())){
+					break;
+				}
+				WebElement earnButton = driver.findElement(By.id("webtraffic_start_button_text"));
+				earnButton.click();
+				count++;
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
+		
 		System.out.println("gogogo");
 	}
 	
