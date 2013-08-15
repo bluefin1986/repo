@@ -206,8 +206,11 @@ public class SurveyTest {
 				}
 				sel.selectByIndex(pickIndex);
 			}
+			boolean isTextArea = false;
+			//填写textarea内容
 			try{
 				List<WebElement> textAreas = driver.findElements(By.xpath("//textarea"));
+				isTextArea = true;
 				for (WebElement textArea : textAreas) {
 					int beginIndex = ra.nextInt(content.length());
 					if(beginIndex == content.length() || content.length() - beginIndex > 30){
@@ -220,6 +223,9 @@ public class SurveyTest {
 			}
 			//填写input内容
 			try{
+				if(isTextArea){
+					throw new Exception("not input task");
+				}
 				List<WebElement> questionDivs = driver.findElements(By.xpath("//div[@class='text cml_field']"));
 				for (WebElement div : questionDivs) {
 					WebElement input = div.findElement(By.tagName("input"));
