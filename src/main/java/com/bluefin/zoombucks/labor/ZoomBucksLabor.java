@@ -29,14 +29,24 @@ public class ZoomBucksLabor extends Thread {
 	
 	private WebDriver driver;
 	
-	public ZoomBucksLabor(String account, WebDriver driver){
+	private int taskIndex;
+	
+	private boolean[] finishFlags;
+	
+	public ZoomBucksLabor(String account, WebDriver driver, boolean[] finishFlags, int taskIndex){
 		this.account = account;
 		this.driver = driver;
+		this.taskIndex = taskIndex;
+		this.finishFlags = finishFlags;
 	}
 	
 	public void run(){
 		Date begin = new Date();
 		login(account, driver);
+		try {
+			registerPeanuts(driver);
+		} catch (Exception e) {
+		}
 		try {
 			//tasks
 			runZoomBucksTask(account,driver);
@@ -53,6 +63,7 @@ public class ZoomBucksLabor extends Thread {
 //					testWatchVideo(account, driver);
 		Date end = new Date();
 		System.out.println(account + " all finished, cost time:" + (end.getTime() - begin.getTime()) / 60000 + " mins");
+		finishFlags[taskIndex] = true;
 	}
 	
 	private void login(String account, WebDriver driver){
@@ -76,7 +87,7 @@ public class ZoomBucksLabor extends Thread {
 		for (WebElement taskTr : taskListTrs) {
 			WebElement bonusValue = taskTr.findElement(By.xpath("td[1]/hgroup/a/h1"));
 			WebElement taskDesc = taskTr.findElement(By.xpath("td[2]/section/h1/a"));
-			if(taskDesc.getText().startsWith("Find the search engine")){
+			if(taskDesc.getText().trim().startsWith("Find the search engine")){
 				int bonus = Integer.parseInt(bonusValue.getText());
 				SearchEngineTask tsk = new SearchEngineTask(taskDesc.getText(), taskDesc.getAttribute("href"), bonus);
 				tasks.add(tsk);
@@ -288,84 +299,50 @@ public class ZoomBucksLabor extends Thread {
 	}
 	
 	private void registerPeanuts(WebDriver driver) throws Exception {
-	    driver.get("http://www.zoombucks.com/paymentwall.php");
-	    driver.findElement(By.xpath("//div[@id='zb_payment_wall']/div/div[2]/div/div[2]/div/ul/li[3]/a/span/img")).click();
+	    driver.get("http://www.zoombucks.com/peanutlabs.php");
+	    driver.get("http://www.peanutlabs.com/userGreeting.php?userId=" + account + "-3984-801b3043e4");
 	    driver.findElement(By.cssSelector("div.pickerfbbuttontextcontent")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    new Select(driver.findElement(By.id("picker_date_yr1376567005604"))).selectByVisibleText("1980");
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    new Select(driver.findElement(By.id("picker_date_m1376567005604"))).selectByVisibleText("五月");
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    new Select(driver.findElement(By.id("picker_date_d1376567005604"))).selectByVisibleText("16");
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    Thread.sleep(500);
+	    WebElement queryBody = driver.findElement(By.id("picker_q_body"));
+	    List<WebElement> selects = queryBody.findElements(By.tagName("select"));
+	    new Select(selects.get(0)).selectByVisibleText("1980");
+	    new Select(selects.get(1)).selectByVisibleText("五月");
+	    new Select(selects.get(2)).selectByVisibleText("14");
+	    String buttonCssSelector = "button.fbbuttonfornav";
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx1-1")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("txt_input")).sendKeys("32004");
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    new Select(driver.findElement(By.id("sel_input"))).selectByVisibleText("$150,000 - $199,999");
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx100-2")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx156-1")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx101-0")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx126-1")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx129-2")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx122-3")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx121-2")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx141-2")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("0")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx158-2")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx159-1")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx130-0")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    new Select(driver.findElement(By.id("sel_input"))).selectByVisibleText("Consumer Cellular");
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx132-1")).click();
-	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
-	    driver.findElement(By.id("button_0_75")).click();
+	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	  }
 }
