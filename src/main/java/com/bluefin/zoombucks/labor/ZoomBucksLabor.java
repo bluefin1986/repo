@@ -39,13 +39,13 @@ public class ZoomBucksLabor extends Thread {
 		login(account, driver);
 		try {
 			//tasks
-			testZoomBucksTask(account,driver);
+			runZoomBucksTask(account,driver);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		try {
 			//surveys
-			testZoomBucksSurvey(account,driver);
+			runZoomBucksSurveys(account,driver);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -85,7 +85,7 @@ public class ZoomBucksLabor extends Thread {
 		return tasks;
 	}
 	
-	public void testZoomBucksTask(String account, WebDriver driver) throws Exception{
+	public void runZoomBucksTask(String account, WebDriver driver) throws Exception{
 		driver.get("http://www.zoombucks.com/tasks.php");
 		driver.get("http://crowdflower.com/judgments/zoombucks?uid=" + account);
 		Thread.sleep(5000);
@@ -137,6 +137,8 @@ public class ZoomBucksLabor extends Thread {
 				}
 				sel.selectByIndex(pickIndex);
 			}
+			boolean isTextArea = false;
+			//填写textarea内容
 			try{
 				List<WebElement> textAreas = driver.findElements(By.xpath("//textarea"));
 				for (WebElement textArea : textAreas) {
@@ -151,6 +153,9 @@ public class ZoomBucksLabor extends Thread {
 			}
 			//填写input内容
 			try{
+				if(isTextArea){
+					throw new Exception("not input task");
+				}
 				List<WebElement> questionDivs = driver.findElements(By.xpath("//div[@class='text cml_field']"));
 				for (WebElement div : questionDivs) {
 					WebElement input = div.findElement(By.tagName("input"));
@@ -184,7 +189,7 @@ public class ZoomBucksLabor extends Thread {
 		return "Presidents Day may refer to: Presidents Day (United States), a holiday in some regions";
 	}
 
-	public void testZoomBucksSurvey(String account, WebDriver driver) throws Exception {
+	public void runZoomBucksSurveys(String account, WebDriver driver) throws Exception {
 		driver.get("http://surveys.zoombucks.com/dashboard.php");
 		Thread.sleep(5000);
 		List<WebElement> elements = driver.findElements(By.xpath("//div[@id='divProfileList']/ul/li"));
