@@ -19,7 +19,7 @@ public class CheckinTest {
 
 	private List<WebDriver> driverList;
 
-	private String[] accounts = { "13859089698", "18677773586", "13860623747" };
+	private String[] accounts = { "13859089698", "18677773586", "13860623747", "13075924899" };
 	private String baseUrl;
 
 	@Before

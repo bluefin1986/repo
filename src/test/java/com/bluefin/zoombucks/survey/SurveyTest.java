@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.JOptionPane;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -30,67 +31,88 @@ public class SurveyTest {
 
 	private List<WebDriver> driverList;
 
-	private String[] accounts = { "gingor" };
+	private String[] accounts = { "alben_nick" };
 	private String baseUrl;
+	
+	private void initDrivers(int accountCount){
+		driverList = new ArrayList<WebDriver>();
+		String[] profiles = new String[]{
+				"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium"
+				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/z8kseba1.selenium2"
+				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/sli4o4cr.selenium3"
+				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/hd8ge2oz.selenium4"};
+		if(accountCount > profiles.length){
+			throw new RuntimeException("profile数量不够");
+		}
+		for (int i = 0; i < accountCount; i++) {
+			File profilePath = new File(profiles[i]);
+			FirefoxProfile fp = new FirefoxProfile(profilePath);
+			FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
+			firefoxDriver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+			driverList.add(firefoxDriver);
+		}
+	}
 
 	@Before
 	public void init() throws IOException {
-		String PROXY = "127.0.0.1:9087";
-		driverList = new ArrayList<WebDriver>();
+		initDrivers(accounts.length);
 		for (int i = 0; i < accounts.length; i++) {
+//			String PROXY = "127.0.0.1:9087";
 			// driverList.add(new InternetExplorerDriver());
-			org.openqa.selenium.Proxy proxy = new org.openqa.selenium.Proxy();
-			proxy.setHttpProxy(PROXY)
-			     .setFtpProxy(PROXY)
-			     .setSslProxy(PROXY);
-			DesiredCapabilities cap = new DesiredCapabilities();
-			cap.setCapability(CapabilityType.PROXY, proxy);
+//			org.openqa.selenium.Proxy proxy = new org.openqa.selenium.Proxy();
+//			proxy.setHttpProxy(PROXY)
+//			     .setFtpProxy(PROXY)
+//			     .setSslProxy(PROXY);
+//			DesiredCapabilities cap = new DesiredCapabilities();
+//			cap.setCapability(CapabilityType.PROXY, proxy);
 			//selenium 专用profile
-			File profilePath = new File("/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium");
-			FirefoxProfile fp = new FirefoxProfile(profilePath);
-//			fp.addExtension(proxyExtension);
-			FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
-//			FirefoxDriver firefoxDriver = new FirefoxDriver(cap);
-			firefoxDriver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
-			driverList.add(firefoxDriver);
+			
+			
+			
 //			driverList.add(new SafariDriver(cap));
 		}
 	}
 	
 	@Test
 	public void testZoombuckSurvey() throws Exception{
-		for (int i = 0; i < driverList.size(); i++) {
+		for (int i = 0; i < accounts.length; i++) {
 			final WebDriver driver = driverList.get(i);
 			final String account = accounts[i];
-//			new Thread(new Runnable() {
-//				
-//				@Override
-//				public void run() {
-//					try {
+			new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					try {
 			
 					login(account, driver);
-//					testZoomBucksTask(account,driver);
+					testZoomBucksTask(account,driver);
 					//surveys
-//					testZoomBucksSurvey(account,driver);
-					testWatchVideo(account, driver);
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//					} catch (Exception ex){
-//						ex.printStackTrace();
-//					}
-//				}
-//			}).start();
+					testZoomBucksSurvey(account,driver);
+//					testWatchVideo(account, driver);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} catch (Exception ex){
+						ex.printStackTrace();
+					}
+				}
+			}).start();
 		}
-//		while (true) {
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
-//		}
+		startDaemon();
+	}
+	
+	private void startDaemon(){
+		while (true) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	private void login(String account, WebDriver driver){
+		driver.manage().deleteAllCookies();
+		driver.navigate().refresh();
 		baseUrl = "http://www.zoombucks.com";
 		driver.get("http://www.zoombucks.com/login.php?logout");
 		driver.get(baseUrl + "/");
@@ -143,14 +165,64 @@ public class SurveyTest {
 			if(taskDesc.getText().startsWith("Find the search engine")){
 				int bonus = Integer.parseInt(bonusValue.getText());
 				SearchEngineTask tsk = new SearchEngineTask(taskDesc.getText(), taskDesc.getAttribute("href"), bonus);
-				System.out.println(tsk.getTaskDesc() + ", " + tsk.getTaskHref() + "," + tsk.getBonus());
 				tasks.add(tsk);
 			}
 		}
+		Random ra = new Random();
+		String content = loadInputContent();
 		Collections.sort(tasks);
 		for (SearchEngineTask searchEngineTask : tasks) {
+			driver.get(searchEngineTask.getTaskHref());
+			Thread.sleep(1000);
+			//选择所有的下拉
+			List<WebElement> selects = driver.findElements(By.xpath("//select"));
+			for (WebElement selElement : selects) {
+				Select sel = new Select(selElement);
+				int length = sel.getOptions().size();
+				int pickIndex = ra.nextInt(length);
+				if(pickIndex < 2){
+					pickIndex = 2;
+				}
+				sel.selectByIndex(pickIndex);
+			}
+			try{
+				List<WebElement> textAreas = driver.findElements(By.xpath("//textarea"));
+				for (WebElement textArea : textAreas) {
+					textArea.sendKeys(content.substring(ra.nextInt(content.length())));
+				}
+			} catch(Exception ex){
+				System.out.println("text areas not found:" + ex.getMessage());
+			}
+			//填写input内容
+			try{
+				List<WebElement> questionDivs = driver.findElements(By.xpath("//div[@class='text cml_field']"));
+				for (WebElement div : questionDivs) {
+					WebElement input = div.findElement(By.tagName("input"));
+					input.sendKeys(div.getAttribute("data-validates-regex"));
+				}
+			} catch(Exception ex){
+				System.out.println("inputs not found:" + ex.getMessage());
+			}
+			//提交
+			try {
+				WebElement submit = driver.findElement(By.xpath("//input[@type='submit']"));
+				submit.click();
+			} catch (Exception e) {
+				System.err.println("submit failed");
+			}
 			
+			Thread.sleep(5000);
 		}
+	}
+	
+	public String loadInputContent(){
+		try {
+			String content = FileUtils.readFileToString(new File("src/main/resources/InputContent.txt"));
+			return content;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return "Presidents Day may refer to: Presidents Day (United States), a holiday in some regions";
 	}
 
 	public void testZoomBucksSurvey(String account, WebDriver driver) throws Exception {
@@ -162,18 +234,14 @@ public class SurveyTest {
 			WebElement desc = webElement.findElement(By.xpath("span"));
 			WebElement anchr = webElement.findElement(By.xpath("a"));
 			String href = anchr.getAttribute("href");
-			
 			surveys.add(new ProfileSurvey(desc.getText(), href, anchr.getText()));
-			
-			
-			
 		}
 		for (ProfileSurvey profileSurvey : surveys) {
-//			if(profileSurvey.getAnchrText().contains("Zoom Bucks")){
+			if(profileSurvey.getAnchrText().contains("Zoom Bucks")){
 				System.out.println(profileSurvey.getSurveyDesc() + " begin");
 				doSurvey(profileSurvey.getHref(), driver);
 				System.out.println(profileSurvey.getSurveyDesc() + " finished");
-//			}
+			}
 		}
 		System.out.println("all survey finished!");
 	}
@@ -192,7 +260,12 @@ public class SurveyTest {
 				Random ra = new Random();
 				if("select".equals(tagName)){
 					Select select = new Select(typeDetect);
-					select.selectByIndex(ra.nextInt(select.getOptions().size()));
+					int optionsCount = select.getOptions().size();
+					int selectIndex = ra.nextInt(optionsCount);
+					if (selectIndex < 2) {
+						selectIndex = optionsCount - 1;
+					}
+					select.selectByIndex(selectIndex);
 				} else {
 					try{
 						WebElement checkRadioContainer = driver.findElement(By.xpath("//td[@class='checkRadioContainer']"));
@@ -206,6 +279,10 @@ public class SurveyTest {
 								while(totalChecked == 0){
 									totalChecked = ra.nextInt(listSize);
 								}
+								//最多选5个提高效率
+								if(totalChecked > 5){
+									totalChecked = 5;
+								}
 								for (int i = 0; i < totalChecked; i++) {
 									checkboxList.get(ra.nextInt(listSize)).click();
 								}
@@ -216,7 +293,7 @@ public class SurveyTest {
 							}
 						} 
 					} catch(Exception e){
-						e.printStackTrace();
+						System.err.println(e.getMessage());
 						WebElement tableRadioElement = driver.findElement(By.xpath("//table[@class='tableBg']"));
 						List<WebElement> cols = tableRadioElement.findElements(By.xpath("tbody/tr/td/table/tbody/tr[1]/td"));
 						List<WebElement> rows = tableRadioElement.findElements(By.xpath("tbody/tr/td/table/tbody/tr"));
