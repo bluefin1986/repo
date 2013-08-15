@@ -112,7 +112,6 @@ public class ZoomBucksLabor extends Thread {
 		Random ra = new Random();
 		String content = loadInputContent();
 		Collections.sort(tasks, new CompareSearchEngineTask());
-		int totalBonus = 0;
 		int failCount = 0;
 		for (int i = 0; i< tasks.size(); i++) {
 			SearchEngineTask searchEngineTask = tasks.get(i);
@@ -158,6 +157,7 @@ public class ZoomBucksLabor extends Thread {
 					String answer = div.getAttribute("data-validates-regex");
 					if(answer.startsWith("(")){
 						System.out.println("found phone num task, may fail:" + searchEngineTask.getTaskHref());
+						failedUrls.add(searchEngineTask.getTaskHref());
 					}
 					input.sendKeys(answer);
 				}
@@ -166,8 +166,8 @@ public class ZoomBucksLabor extends Thread {
 			}
 			//提交
 			submit.click();
-			totalBonus += searchEngineTask.getBonus();
-			System.out.println("[" + searchEngineTask.getTaskDesc() + "] finished. " + searchEngineTask.getBonus() + " bonus earned, total:" + totalBonus);
+			totalEarned += searchEngineTask.getBonus();
+			System.out.println("[" + searchEngineTask.getTaskDesc() + "] finished. " + searchEngineTask.getBonus() + " bonus earned, total:" + totalEarned);
 			System.out.println("rest tasks:" + (tasks.size() - i - 1) + ", failed:" + failCount);
 			Thread.sleep(2000);
 		}
@@ -195,7 +195,6 @@ public class ZoomBucksLabor extends Thread {
 			String href = anchr.getAttribute("href");
 			surveys.add(new ProfileSurvey(desc.getText(), href, anchr.getText()));
 		}
-		int earned = 0;
 		for (int i = 0; i < surveys.size(); i++) {
 			ProfileSurvey profileSurvey = surveys.get(i);
 			String anchrText = profileSurvey.getAnchrText();
@@ -207,8 +206,8 @@ public class ZoomBucksLabor extends Thread {
 				}
 				System.out.println("[" + profileSurvey.getSurveyDesc() + "] begin");
 				doSurvey(profileSurvey.getHref(), driver);
-				earned += bonus;
-				System.out.println("[" + profileSurvey.getSurveyDesc() + "] finished " + bonus + " earned, total:" + earned);
+				totalEarned += bonus;
+				System.out.println("[" + profileSurvey.getSurveyDesc() + "] finished " + bonus + " earned, total:" + totalEarned);
 				System.out.println(surveys.size() - i - 1 + " surveys rest");
 			}
 		}
