@@ -1,4 +1,4 @@
-package com.bluefin.zoombucks.survey;
+package com.bluefin.zoombucks.labor;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,101 +7,58 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Before;
-import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.Select;
 
 import com.bluefin.zoombucks.model.CompareSearchEngineTask;
 import com.bluefin.zoombucks.model.ProfileSurvey;
 import com.bluefin.zoombucks.model.SearchEngineTask;
 
-public class SurveyTest {
-
-	private List<WebDriver> driverList;
-
-	private String[] accounts = { "liongibson" };
-	private String baseUrl;
+public class ZoomBucksLabor extends Thread {
 	
-	private void initDrivers(int accountCount){
-		driverList = new ArrayList<WebDriver>();
-//		String[] profiles = new String[]{
-//				"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium"
-//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/z8kseba1.selenium2"
-//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/sli4o4cr.selenium3"
-//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/hd8ge2oz.selenium4"};
-		String[] profiles = new String[]{
-				"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1"
-				,"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/6v81xj5x.selenium2"
-		};
-		if(accountCount > profiles.length){
-			throw new RuntimeException("profile数量不够");
-		}
-		for (int i = 0; i < accountCount; i++) {
-			File profilePath = new File(profiles[i]);
-			FirefoxProfile fp = new FirefoxProfile(profilePath);
-			FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
-			firefoxDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-			driverList.add(firefoxDriver);
-		}
-	}
-
-	@Before
-	public void init() throws IOException {
-		initDrivers(accounts.length);
+	private String account;
+	
+	private int totalEarned;
+	
+	private List<String> failedUrls;
+	
+	private WebDriver driver;
+	
+	public ZoomBucksLabor(String account, WebDriver driver){
+		this.account = account;
+		this.driver = driver;
 	}
 	
-	@Test
-	public void testZoombuckSurvey() throws Exception{
-		for (int i = 0; i < accounts.length; i++) {
-			final WebDriver driver = driverList.get(i);
-			final String account = accounts[i];
-			new Thread(new Runnable() {
-				
-				@Override
-				public void run() {
-					try {
-						Date begin = new Date();
-						login(account, driver);
-						testZoomBucksTask(account,driver);
-						//surveys
-						testZoomBucksSurvey(account,driver);
-	//					testWatchVideo(account, driver);
-						Date end = new Date();
-						System.out.println(account + " all finished, cost time:" + (end.getTime() - begin.getTime()) / 60000 + " mins");
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					} catch (Exception ex){
-						ex.printStackTrace();
-					}
-				}
-			}).start();
+	public void run(){
+		Date begin = new Date();
+		login(account, driver);
+		try {
+			//tasks
+			testZoomBucksTask(account,driver);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		startDaemon();
-	}
-	
-	private void startDaemon(){
-		while (true) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		try {
+			//surveys
+			testZoomBucksSurvey(account,driver);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+		
+//					testWatchVideo(account, driver);
+		Date end = new Date();
+		System.out.println(account + " all finished, cost time:" + (end.getTime() - begin.getTime()) / 60000 + " mins");
 	}
 	
 	private void login(String account, WebDriver driver){
 		driver.manage().deleteAllCookies();
 		driver.navigate().refresh();
-		baseUrl = "http://www.zoombucks.com";
+		String baseUrl = "http://www.zoombucks.com";
 		driver.get("http://www.zoombucks.com/login.php?logout");
 		driver.get(baseUrl + "/");
 		driver.findElement(By.linkText("Login")).click();
@@ -111,31 +68,6 @@ public class SurveyTest {
 		driver.findElement(By.id("password")).sendKeys("baoziazhu609");
 		driver.findElement(By.cssSelector("button.btn")).click();
 		System.out.println(account + "登录成功");
-	}
-	
-	
-	public void testWatchVideo(String account, WebDriver driver){
-		String earnUrl = "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
-		String url = "https://embed.jungroup.com/embedded_videos/catalog_frame?uid=" + account + "&site=ZoomBucks&pid=4716234&sub_id=&reward=2%20ZBucks";
-		boolean finished = false;
-		int count = 0;
-		while(count < 10 && !finished){
-			try {
-				driver.get(earnUrl);
-				WebElement bodyContent = driver.findElement(By.tagName("body"));
-				String content = bodyContent.getText();
-				if("No Videos available.".equals(content.trim())){
-					break;
-				}
-				WebElement earnButton = driver.findElement(By.id("webtraffic_start_button_text"));
-				earnButton.click();
-				count++;
-			} catch (Exception e) {
-				// TODO: handle exception
-			}
-		}
-		
-		System.out.println("gogogo");
 	}
 	
 	private List<SearchEngineTask> loadTasks(WebDriver driver, WebElement taskListTable){
@@ -213,7 +145,7 @@ public class SurveyTest {
 					if(beginIndex == content.length() || content.length() - beginIndex > 30){
 						beginIndex = content.length() - 30;
 					}
-					textArea.sendKeys(content.substring(ra.nextInt(content.length())));
+					textArea.sendKeys(content.substring(beginIndex));
 				}
 			} catch(Exception ex){
 				System.out.println("text areas not found:" + ex.getMessage());
@@ -352,7 +284,7 @@ public class SurveyTest {
 	}
 	
 	private void registerPeanuts(WebDriver driver) throws Exception {
-	    driver.get(baseUrl + "/paymentwall.php");
+	    driver.get("http://www.zoombucks.com/paymentwall.php");
 	    driver.findElement(By.xpath("//div[@id='zb_payment_wall']/div/div[2]/div/div[2]/div/ul/li[3]/a/span/img")).click();
 	    driver.findElement(By.cssSelector("div.pickerfbbuttontextcontent")).click();
 	    // ERROR: Caught exception [ERROR: Unsupported command [selectWindow | name=&mid=0a72a848c5cc0b0b0876af15c2a00d47 | ]]
