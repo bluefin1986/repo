@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
@@ -18,10 +19,13 @@ import org.openqa.selenium.support.ui.Select;
 import com.bluefin.zoombucks.model.CompareSearchEngineTask;
 import com.bluefin.zoombucks.model.ProfileSurvey;
 import com.bluefin.zoombucks.model.SearchEngineTask;
+import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
 public class ZoomBucksLabor extends Thread {
 	
-	private String account;
+	private ZoomBucksAccount zaccount;
+	
+	private String email;
 	
 	private int totalEarned;
 	
@@ -29,44 +33,80 @@ public class ZoomBucksLabor extends Thread {
 	
 	private WebDriver driver;
 	
-	private int taskIndex;
-	
-	private boolean[] finishFlags;
-	
-	public ZoomBucksLabor(String account, WebDriver driver, boolean[] finishFlags, int taskIndex){
-		this.account = account;
+	public ZoomBucksLabor(ZoomBucksAccount zaccount, WebDriver driver){
+		this.zaccount = zaccount;
 		this.driver = driver;
-		this.taskIndex = taskIndex;
-		this.finishFlags = finishFlags;
+		this.email = zaccount.getEmail();
 	}
 	
 	public void run(){
 		Date begin = new Date();
-		login(account, driver);
 		try {
-			registerPeanuts(driver);
+			login();
+		} catch (Exception e1) {
+			System.out.println("login failed ,register account:" + zaccount.getFullName());
+			try {
+				register();
+				try {
+					registerRewardTv();
+				} catch (Exception e) {
+					System.err.println("register rewardTv failed!" + e.getMessage());
+				}
+				try {
+					activateSurvey();
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.err.println("active survey failed!" + e.getMessage());
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("registed failed!");
+				return;
+			}
+			
+		}
+		try {
+			registerPeanuts();
 		} catch (Exception e) {
+			System.out.println("peanuts account already actived。");
 		}
 		try {
 			//tasks
-			runZoomBucksTask(account,driver);
+			runZoomBucksTask();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		try {
 			//surveys
-			runZoomBucksSurveys(account,driver);
+			runZoomBucksSurveys();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 //					testWatchVideo(account, driver);
 		Date end = new Date();
-		System.out.println(account + " all finished, cost time:" + (end.getTime() - begin.getTime()) / 60000 + " mins");
-		finishFlags[taskIndex] = true;
+		System.out.println(zaccount.getFullName() + " all finished, cost time:" + (end.getTime() - begin.getTime()) / 60000 + " mins");
 	}
 	
-	private void login(String account, WebDriver driver){
+	private void register() throws Exception{
+		driver.get("http://www.zoombucks.com/");
+		driver.findElement(By.id("email")).sendKeys(zaccount.getEmail());
+		driver.findElement(By.id("fullname")).sendKeys(zaccount.getFullName());
+		driver.findElement(By.id("textInput")).sendKeys(zaccount.getPassword());
+		driver.findElement(By.id("accept_terms")).click();
+		driver.findElement(By.xpath("//div[@class='submitbtn']/button")).click();
+		Thread.sleep(1000);
+		String[] accountArray = zaccount.getFullName().split("_");
+		driver.findElement(By.name("first_name")).sendKeys(accountArray[0]);
+		driver.findElement(By.name("last_name")).sendKeys(accountArray[1]);
+		driver.findElement(By.name("gender")).click();
+		driver.findElement(By.id("date_of_birth")).sendKeys(zaccount.getBirthDateStr());
+		driver.findElement(By.id("submitBtn")).click();
+		Thread.sleep(5000);
+	}
+	
+	private void login() throws Exception{
+		System.out.println("login " + zaccount.getFullName());
 		driver.manage().deleteAllCookies();
 		driver.navigate().refresh();
 		String baseUrl = "http://www.zoombucks.com";
@@ -74,14 +114,18 @@ public class ZoomBucksLabor extends Thread {
 		driver.get(baseUrl + "/");
 		driver.findElement(By.linkText("Login")).click();
 		driver.findElement(By.id("username")).clear();
-		driver.findElement(By.id("username")).sendKeys(account);
+		driver.findElement(By.id("username")).sendKeys(zaccount.getFullName());
 		driver.findElement(By.id("password")).clear();
-		driver.findElement(By.id("password")).sendKeys("baoziazhu609");
+		driver.findElement(By.id("password")).sendKeys(zaccount.getPassword());
 		driver.findElement(By.cssSelector("button.btn")).click();
-		System.out.println(account + "登录成功");
+		String url = driver.getCurrentUrl();
+		if("http://www.zoombucks.com/login.php".equals(url)){
+			throw new Exception(zaccount.getFullName() + "not registed yet!");
+		}
+		System.out.println(zaccount.getFullName() + "登录成功");
 	}
 	
-	private List<SearchEngineTask> loadTasks(WebDriver driver, WebElement taskListTable){
+	private List<SearchEngineTask> loadTasks(WebElement taskListTable){
 		List<WebElement> taskListTrs = taskListTable.findElements(By.xpath("tbody/tr"));
 		List<SearchEngineTask> tasks = new ArrayList<SearchEngineTask>();
 		for (WebElement taskTr : taskListTrs) {
@@ -96,9 +140,9 @@ public class ZoomBucksLabor extends Thread {
 		return tasks;
 	}
 	
-	public void runZoomBucksTask(String account, WebDriver driver) throws Exception{
+	private void runZoomBucksTask() throws Exception{
 		driver.get("http://www.zoombucks.com/tasks.php");
-		driver.get("http://crowdflower.com/judgments/zoombucks?uid=" + account);
+		driver.get("http://crowdflower.com/judgments/zoombucks?uid=" + zaccount.getFullName());
 		Thread.sleep(5000);
 		List<String> pageHrefs = new ArrayList<String>();
 		List<WebElement> pageButtons = driver.findElements(By.xpath("//nav[@class='pagination']/span/a"));
@@ -111,13 +155,13 @@ public class ZoomBucksLabor extends Thread {
 			}
 		}
 		WebElement taskListTable = driver.findElement(By.xpath("//table[@class='task-listing']"));
-		List<SearchEngineTask> tasks = loadTasks(driver, taskListTable);
+		List<SearchEngineTask> tasks = loadTasks(taskListTable);
 		
 		for (String href : pageHrefs) {
 			driver.get(href);
 			Thread.sleep(4000);
 			taskListTable = driver.findElement(By.xpath("//table[@class='task-listing']"));
-			tasks.addAll(loadTasks(driver, taskListTable));
+			tasks.addAll(loadTasks(taskListTable));
 		}
 		System.out.println("total task count:" + tasks.size());
 		Random ra = new Random();
@@ -200,7 +244,7 @@ public class ZoomBucksLabor extends Thread {
 		return "Presidents Day may refer to: Presidents Day (United States), a holiday in some regions";
 	}
 
-	public void runZoomBucksSurveys(String account, WebDriver driver) throws Exception {
+	public void runZoomBucksSurveys() throws Exception {
 		driver.get("http://surveys.zoombucks.com/dashboard.php");
 		Thread.sleep(5000);
 		List<WebElement> elements = driver.findElements(By.xpath("//div[@id='divProfileList']/ul/li"));
@@ -298,9 +342,17 @@ public class ZoomBucksLabor extends Thread {
 		}
 	}
 	
-	private void registerPeanuts(WebDriver driver) throws Exception {
+	private void registerPeanuts() throws Exception {
 	    driver.get("http://www.zoombucks.com/peanutlabs.php");
-	    driver.get("http://www.peanutlabs.com/userGreeting.php?userId=" + account + "-3984-801b3043e4");
+	    List<WebElement> iframes = driver.findElements(By.tagName("iframe"));
+	    String url = null;
+	    for (WebElement webElement : iframes) {
+	    	url = webElement.getAttribute("src");
+	    	if(StringUtils.isNotBlank(url)){
+	    		break;
+	    	}
+		}
+	    driver.get(url);
 	    driver.findElement(By.cssSelector("div.pickerfbbuttontextcontent")).click();
 	    Thread.sleep(500);
 	    WebElement queryBody = driver.findElement(By.id("picker_q_body"));
@@ -344,5 +396,84 @@ public class ZoomBucksLabor extends Thread {
 	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
 	    driver.findElement(By.id("qx132-1")).click();
 	    driver.findElement(By.cssSelector(buttonCssSelector)).click();
+	    System.out.println("peanuts account actived, 20 earned!");
+	    totalEarned += 20;
 	  }
+	
+	private void activateSurvey() throws Exception{
+		System.out.println("activate survey.");
+		driver.get("http://surveys.zoombucks.com");
+		Thread.sleep(2000);
+		WebElement optState = null;
+		while(optState == null){
+			try {
+				optState = driver.findElement(By.id("optStateId"));
+			} catch (Exception e) {
+				System.out.println("not found stateId, sleep for 1 second");
+				Thread.sleep(1000);
+			}
+		}
+		new Select(optState).selectByVisibleText("Florida");
+		driver.findElement(By.id("txtZipPostal")).sendKeys("32004");
+		new Select(driver.findElement(By.id("optMonthId"))).selectByVisibleText("June");
+		new Select(driver.findElement(By.id("optDayId"))).selectByVisibleText("10");
+		new Select(driver.findElement(By.id("optYearId"))).selectByVisibleText("1984");
+		driver.findElement(By.id("rdGender")).click();
+		new Select(driver.findElement(By.id("optAnnualHouseholdIncomeId"))).selectByIndex(5);
+		new Select(driver.findElement(By.id("optEducationLevelId"))).selectByIndex(4);
+		new Select(driver.findElement(By.id("optEmploymentStatusId"))).selectByIndex(4);
+		new Select(driver.findElement(By.id("optIndustryId"))).selectByIndex(8);
+		Thread.sleep(2000);
+		new Select(driver.findElement(By.id("optRoleId"))).selectByIndex(4);
+		Thread.sleep(2000);
+		Select selectJobTitle = new Select(driver.findElement(By.id("optJobTitleId")));
+		selectJobTitle.selectByIndex(selectJobTitle.getOptions().size() - 2);
+		Thread.sleep(2000);
+		new Select(driver.findElement(By.id("optMaritalStatusId"))).selectByIndex(2);
+		new Select(driver.findElement(By.id("optEthnicityId"))).selectByIndex(10);
+		new Select(driver.findElement(By.id("optMobilePhoneTypeId"))).selectByIndex(2);
+		driver.findElement(By.id("rdChildrenUnder18_N")).click();
+		driver.findElement(By.name("chbTermsAndConditions")).click();
+		driver.findElement(By.xpath("//input[@type='submit']")).click();
+		System.out.println("survey actived!");
+		Thread.sleep(5000);
+	}
+	
+	private void registerRewardTv() throws Exception{
+		driver.get("http://www.zoombucks.com/flow.php");
+		driver.findElement(By.id("top_nav_5")).click();
+		String registerHref = driver.findElement(By.xpath("//div[@class='content']/a")).getAttribute("href");
+		driver.get(registerHref);
+		Thread.sleep(5000);
+		driver.findElement(By.id("emailAddress")).sendKeys(zaccount.getEmail());
+		WebElement form = driver.findElement(By.xpath("//form[@id='join']"));
+		form.findElement(By.id("password")).sendKeys(zaccount.getPassword());
+		driver.findElement(By.id("confirmPassword")).sendKeys(zaccount.getPassword());
+		new Select(driver.findElement(By.id("state"))).selectByVisibleText("FL");
+		driver.findElement(By.id("zipcode")).sendKeys("32004");
+		new Select(driver.findElement(By.id("monthOfBirth"))).selectByVisibleText("APR");
+		driver.findElement(By.id("yearOfBirth")).sendKeys("1982");
+		driver.findElement(By.id("gender1")).click();
+		new Select(driver.findElement(By.id("incomeList"))).selectByIndex(5);
+		driver.findElement(By.name("rentOwnHomeResponseID")).click();
+		driver.findElement(By.name("childrenInHomeResponseID")).click();
+		driver.findElement(By.id("hispanic_7007")).click();
+		new Select(driver.findElement(By.id("raceResponseID"))).selectByIndex(2);
+		driver.findElement(By.id("rememberMe1")).click();
+		driver.findElement(By.cssSelector("input.w100i")).click();
+		String url = driver.getCurrentUrl();
+		if("http://www.rewardtv.com/verify/welcome_back.sdo?nextPage=%2Fplay%2Frelogin.sdo".equals(url)){
+			loginRewardTv();
+		}
+		if("http://www.rewardtv.com/play/relogin.sdo".equals(url)){
+			loginRewardTv();
+		}
+		System.out.println("rewardTv registed!");
+	}
+	
+	private void loginRewardTv(){
+		driver.findElement(By.id("userName")).sendKeys(zaccount.getEmail());
+		driver.findElement(By.id("password")).sendKeys(zaccount.getPassword());
+		driver.findElement(By.id("btnAcctLogin")).click();
+	}
 }
