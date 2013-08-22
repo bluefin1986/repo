@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import javax.swing.JOptionPane;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
@@ -26,7 +28,7 @@ public class ZoomBucksLabor extends Thread {
 	
 	private ZoomBucksAccount zaccount;
 	
-	private String email;
+	private boolean silentMode = false;
 	
 	private int totalEarned;
 	
@@ -37,7 +39,6 @@ public class ZoomBucksLabor extends Thread {
 	public ZoomBucksLabor(ZoomBucksAccount zaccount, WebDriver driver){
 		this.zaccount = zaccount;
 		this.driver = driver;
-		this.email = zaccount.getEmail();
 	}
 	
 	public void run(){
@@ -171,6 +172,7 @@ public class ZoomBucksLabor extends Thread {
 		int failCount = 0;
 		for (int i = 0; i< tasks.size(); i++) {
 			SearchEngineTask searchEngineTask = tasks.get(i);
+			System.out.println("now:" + searchEngineTask.getTaskHref());
 			driver.get(searchEngineTask.getTaskHref());
 			Thread.sleep(1000);
 			WebElement submit = null;
@@ -198,6 +200,9 @@ public class ZoomBucksLabor extends Thread {
 			//填写input内容
 			try{
 				List<WebElement> questionDivs = driver.findElements(By.xpath("//div[@class='text cml_field']"));
+				if(questionDivs.size() == 0){
+					throw new Exception("not found text inputs");
+				}
 				JavascriptExecutor executor = (JavascriptExecutor)driver;
 				for (WebElement div : questionDivs) {
 					WebElement input = div.findElement(By.tagName("input"));
@@ -207,12 +212,15 @@ public class ZoomBucksLabor extends Thread {
 					String answer = div.getAttribute("data-validates-regex");
 					if(answer.startsWith("(")){
 //						executor.executeScript("document.getElementById('" + input.get"')");
-						System.out.println("found phone num task, may fail:" + searchEngineTask.getTaskHref());
-						failedUrls.add(searchEngineTask.getTaskHref());
-						meetRegexError = true;
-						break;
+						if(silentMode){
+							failedUrls.add(searchEngineTask.getTaskHref());
+							meetRegexError = true;
+							break;
+						}
+						JOptionPane.showMessageDialog(null, "found phone num task, should be handled manually");
+					} else {
+						input.sendKeys(answer);
 					}
-					input.sendKeys(answer);
 				}
 				isInput = true;
 			} catch(Exception ex){
@@ -504,5 +512,9 @@ public class ZoomBucksLabor extends Thread {
 		driver.findElement(By.id("userName")).sendKeys(zaccount.getEmail());
 		driver.findElement(By.id("password")).sendKeys(zaccount.getPassword());
 		driver.findElement(By.id("btnAcctLogin")).click();
+	}
+	
+	public void silentMode(){
+		this.silentMode = true;
 	}
 }
