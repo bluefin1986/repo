@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.safari.SafariDriver;
 
@@ -26,8 +27,9 @@ public class CheckinTest {
 	public void init() {
 		driverList = new ArrayList<WebDriver>();
 		for (int i = 0; i < accounts.length; i++) {
+			driverList.add(new FirefoxDriver());
 //			driverList.add(new InternetExplorerDriver());
-			driverList.add(new SafariDriver());
+//			driverList.add(new SafariDriver());
 		}
 	}
 

@@ -11,6 +11,7 @@ import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -95,13 +96,13 @@ public class ZoomBucksLabor extends Thread {
 		driver.findElement(By.id("textInput")).sendKeys(zaccount.getPassword());
 		driver.findElement(By.id("accept_terms")).click();
 		driver.findElement(By.xpath("//div[@class='submitbtn']/button")).click();
-		Thread.sleep(1000);
+		Thread.sleep(5000);
 		String[] accountArray = zaccount.getFullName().split("_");
 		driver.findElement(By.name("first_name")).sendKeys(accountArray[0]);
 		driver.findElement(By.name("last_name")).sendKeys(accountArray[1]);
 		driver.findElement(By.name("gender")).click();
 		driver.findElement(By.id("date_of_birth")).sendKeys(zaccount.getBirthDateStr());
-		driver.findElement(By.id("submitBtn")).click();
+		driver.findElement(By.tagName("form")).submit();
 		Thread.sleep(5000);
 	}
 	
@@ -192,9 +193,36 @@ public class ZoomBucksLabor extends Thread {
 				}
 				sel.selectByIndex(pickIndex);
 			}
-			boolean isTextArea = false;
+			boolean isInput = false;
+			boolean meetRegexError = false;
+			//填写input内容
+			try{
+				List<WebElement> questionDivs = driver.findElements(By.xpath("//div[@class='text cml_field']"));
+				JavascriptExecutor executor = (JavascriptExecutor)driver;
+				for (WebElement div : questionDivs) {
+					WebElement input = div.findElement(By.tagName("input"));
+					if(input == null){
+						System.out.println("not exist");
+					}
+					String answer = div.getAttribute("data-validates-regex");
+					if(answer.startsWith("(")){
+//						executor.executeScript("document.getElementById('" + input.get"')");
+						System.out.println("found phone num task, may fail:" + searchEngineTask.getTaskHref());
+						failedUrls.add(searchEngineTask.getTaskHref());
+						meetRegexError = true;
+						break;
+					}
+					input.sendKeys(answer);
+				}
+				isInput = true;
+			} catch(Exception ex){
+				System.out.println("inputs not found:" + ex.getMessage());
+			}
 			//填写textarea内容
 			try{
+				if(isInput){
+					throw new Exception("not textarea task");
+				}
 				List<WebElement> textAreas = driver.findElements(By.xpath("//textarea"));
 				for (WebElement textArea : textAreas) {
 					int beginIndex = ra.nextInt(content.length());
@@ -206,29 +234,15 @@ public class ZoomBucksLabor extends Thread {
 			} catch(Exception ex){
 				System.out.println("text areas not found:" + ex.getMessage());
 			}
-			//填写input内容
-			try{
-				if(isTextArea){
-					throw new Exception("not input task");
-				}
-				List<WebElement> questionDivs = driver.findElements(By.xpath("//div[@class='text cml_field']"));
-				for (WebElement div : questionDivs) {
-					WebElement input = div.findElement(By.tagName("input"));
-					String answer = div.getAttribute("data-validates-regex");
-					if(answer.startsWith("(")){
-						System.out.println("found phone num task, may fail:" + searchEngineTask.getTaskHref());
-						failedUrls.add(searchEngineTask.getTaskHref());
-					}
-					input.sendKeys(answer);
-				}
-			} catch(Exception ex){
-				System.out.println("inputs not found:" + ex.getMessage());
+			if(meetRegexError){
+				failCount++;
+			} else {
+				//提交
+				submit.click();
+				totalEarned += searchEngineTask.getBonus();
+				System.out.println("[" + searchEngineTask.getTaskDesc() + "] finished. " + searchEngineTask.getBonus() + " bonus earned, total:" + totalEarned);
 			}
-			//提交
-			submit.click();
-			totalEarned += searchEngineTask.getBonus();
-			System.out.println("[" + searchEngineTask.getTaskDesc() + "] finished. " + searchEngineTask.getBonus() + " bonus earned, total:" + totalEarned);
-			System.out.println("rest tasks:" + (tasks.size() - i - 1) + ", failed:" + failCount);
+			System.out.println("total tasks: " + tasks.size() + " rest tasks:" + (tasks.size() - i - 1) + ", failed:" + failCount);
 			Thread.sleep(2000);
 		}
 		System.out.println("all tasks finished!");
@@ -247,7 +261,18 @@ public class ZoomBucksLabor extends Thread {
 	public void runZoomBucksSurveys() throws Exception {
 		driver.get("http://surveys.zoombucks.com/dashboard.php");
 		Thread.sleep(5000);
-		List<WebElement> elements = driver.findElements(By.xpath("//div[@id='divProfileList']/ul/li"));
+		List<WebElement> elements = null;
+		try {
+			elements = driver.findElements(By.xpath("//div[@id='divProfileList']/ul/li"));
+		} catch (Exception e) {
+			WebElement element = driver.findElement(By.id("optCountryId"));
+			if(element != null){
+				System.out.println(zaccount.getFullName() + " survey not activated yet, activate survey");
+				activateSurvey();
+				driver.get("http://surveys.zoombucks.com/dashboard.php");
+				Thread.sleep(5000);
+			}
+		}
 		List<ProfileSurvey> surveys = new ArrayList<ProfileSurvey>();
 		for (WebElement webElement : elements) {
 			WebElement desc = webElement.findElement(By.xpath("span"));
@@ -427,6 +452,10 @@ public class ZoomBucksLabor extends Thread {
 		new Select(driver.findElement(By.id("optRoleId"))).selectByIndex(4);
 		Thread.sleep(2000);
 		Select selectJobTitle = new Select(driver.findElement(By.id("optJobTitleId")));
+		int jobTitleSize = selectJobTitle.getOptions().size();
+		if(jobTitleSize == 1){
+			Thread.sleep(5000);
+		}
 		selectJobTitle.selectByIndex(selectJobTitle.getOptions().size() - 2);
 		Thread.sleep(2000);
 		new Select(driver.findElement(By.id("optMaritalStatusId"))).selectByIndex(2);

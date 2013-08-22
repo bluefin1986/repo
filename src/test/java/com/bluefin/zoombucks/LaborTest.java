@@ -26,15 +26,15 @@ public class LaborTest {
 	
 	private void initDrivers(int accountCount){
 		driverList = new ArrayList<WebDriver>();
-		String[] profiles = new String[]{
-				"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium"
-				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/z8kseba1.selenium2"
-				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/sli4o4cr.selenium3"
-				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/hd8ge2oz.selenium4"};
 //		String[] profiles = new String[]{
-//				"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1"
-//				,"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/6v81xj5x.selenium2"
-//		};
+//				"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium"
+//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/z8kseba1.selenium2"
+//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/sli4o4cr.selenium3"
+//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/hd8ge2oz.selenium4"};
+		String[] profiles = new String[]{
+				"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/6v81xj5x.selenium2"
+				,"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1"
+		};
 		if(accountList.size() > profiles.length){
 			throw new RuntimeException("profile数量不够");
 		}
@@ -52,7 +52,8 @@ public class LaborTest {
 	}
 	
 	private FirefoxDriver generateFirefoxDriver(){
-		File profilePath = new File("/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium");
+//		File profilePath = new File("/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium");
+		File profilePath = new File("C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1");
 		FirefoxProfile fp = new FirefoxProfile(profilePath);
 		FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
 		firefoxDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
@@ -62,34 +63,41 @@ public class LaborTest {
 	@Before
 	public void init() throws IOException {
 		accountList = new ArrayList<ZoomBucksAccount>();
-//		ZoomBucksAccount acct0 = new ZoomBucksAccount();
-//		acct0.setBirthDateStr("19820501");
-//		acct0.setFullName("harry_nocora");
-//		acct0.setEmail("harry_nocora@hotmail.com");
-//		acct0.setGender("M");
-//		acct0.setPassword("baoziazhu609");
-//		accountList.add(acct0);
-//		ZoomBucksAccount acct = new ZoomBucksAccount();
-//		acct.setBirthDateStr("19860501");
-//		acct.setFullName("nucle_hobson");
-//		acct.setEmail("nucle_hobson@hotmail.com");
-//		acct.setGender("M");
-//		acct.setPassword("baoziazhu609");
-//		accountList.add(acct);
+		ZoomBucksAccount acct0 = new ZoomBucksAccount();
+		acct0.setBirthDateStr("19820501");
+		acct0.setFullName("nexusor_albin");
+		acct0.setEmail("nexusor_albin@hotmail.com");
+		acct0.setGender("M");
+		acct0.setPassword("baoziazhu609");
+		accountList.add(acct0);
+		ZoomBucksAccount acct = new ZoomBucksAccount();
+		acct.setBirthDateStr("19860501");
+		acct.setFullName("masbitle_hooks");
+		acct.setEmail("masbitle_hooks@hotmail.com");
+		acct.setGender("M");
+		acct.setPassword("baoziazhu609");
+		accountList.add(acct);
 		ZoomBucksAccount acct1 = new ZoomBucksAccount();
 		acct1.setBirthDateStr("19870511");
-		acct1.setFullName("nico_albin0011");
-		acct1.setEmail("nico_albin0011@hotmail.com");
+		acct1.setFullName("olando_masu");
+		acct1.setEmail("olando_masu@hotmail.com");
 		acct1.setGender("F");
 		acct1.setPassword("baoziazhu609");
 		accountList.add(acct1);
 		ZoomBucksAccount acct2 = new ZoomBucksAccount();
 		acct2.setBirthDateStr("19860511");
-		acct2.setFullName("monte_doracy");
-		acct2.setEmail("monte_doracy@hotmail.com");
+		acct2.setFullName("james_dingous");
+		acct2.setEmail("james_dingous@hotmail.com");
 		acct2.setGender("F");
 		acct2.setPassword("baoziazhu609");
 		accountList.add(acct2);
+		ZoomBucksAccount acct3 = new ZoomBucksAccount();
+		acct3.setBirthDateStr("19860511");
+		acct3.setFullName("katty_susama");
+		acct3.setEmail("katty_susama@hotmail.com");
+		acct3.setGender("F");
+		acct3.setPassword("baoziazhu609");
+		accountList.add(acct3);
 	}
 	
 	@Test
