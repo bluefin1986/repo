@@ -3,8 +3,8 @@ package com.bluefin.zoombucks;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -13,7 +13,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 
+import com.bluefin.WebDriverFactory;
 import com.bluefin.zoombucks.labor.ZoomBucksLabor;
+import com.bluefin.zoombucks.model.SearchEngineTask;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
 public class LaborTest {
@@ -23,6 +25,8 @@ public class LaborTest {
 	private List<ZoomBucksAccount> accountList;
 
 	private boolean[] finishFlags;
+	
+	public static Map<String, SearchEngineTask> taskMap = null;
 	
 	private void initDrivers(int accountCount){
 		driverList = new ArrayList<WebDriver>();
@@ -51,35 +55,28 @@ public class LaborTest {
 		}
 	}
 	
-	private FirefoxDriver generateFirefoxDriver(){
-		File profilePath = new File("/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium");
-//		File profilePath = new File("C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1");
-		FirefoxProfile fp = new FirefoxProfile(profilePath);
-		FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
-		firefoxDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		return firefoxDriver;
-	}
-	
 	@Before
 	public void init() throws IOException {
+		taskMap = ZoomBucksLabor.loadTaskMap();
+		
 		accountList = new ArrayList<ZoomBucksAccount>();
 		ZoomBucksAccount acct0 = new ZoomBucksAccount();
 		acct0.setBirthDateStr("19820501");
-		acct0.setFullName("tommy_glinger");
+		acct0.setFullName("yelo_masolo");
 		acct0.setEmail("tommy_glinger@hotmail.com");
 		acct0.setGender("M");
 		acct0.setPassword("baoziazhu609");
 		accountList.add(acct0);
 		ZoomBucksAccount acct = new ZoomBucksAccount();
 		acct.setBirthDateStr("19860501");
-		acct.setFullName("lily_glantor");
+		acct.setFullName("monte_doracy");
 		acct.setEmail("lily_glantor@hotmail.com");
 		acct.setGender("M");
 		acct.setPassword("baoziazhu609");
 		accountList.add(acct);
 		ZoomBucksAccount acct1 = new ZoomBucksAccount();
 		acct1.setBirthDateStr("19870511");
-		acct1.setFullName("jimmy_roveren");
+		acct1.setFullName("nico_albin0011");
 		acct1.setEmail("jimmy_roveren@outlook.com");
 		acct1.setGender("F");
 		acct1.setPassword("baoziazhu609");
@@ -93,7 +90,7 @@ public class LaborTest {
 //		accountList.add(acct2);
 		ZoomBucksAccount acct3 = new ZoomBucksAccount();
 		acct3.setBirthDateStr("19860511");
-		acct3.setFullName("katty_susama");
+		acct3.setFullName("alben_nick");
 		acct3.setEmail("katty_susama@hotmail.com");
 		acct3.setGender("F");
 		acct3.setPassword("baoziazhu609");
@@ -104,22 +101,10 @@ public class LaborTest {
 	public void testZoombuckSurvey() throws Exception{
 		WebDriver driver = null;
 		for (int i = 0; i < accountList.size(); i++) {
-			driver = generateFirefoxDriver();
+			driver = WebDriverFactory.generateFirefoxDriver();
 			ZoomBucksAccount account = accountList.get(i);
 //			new ZoomBucksLabor(account, driver).start();
 			new ZoomBucksLabor(account, driver).run();
-			driver.quit();
-			Thread.sleep(2000);
-		}
-		//再扫一次，折中的办法先用，后面再优化
-		for (int i = 0; i < accountList.size(); i++) {
-			driver = generateFirefoxDriver();
-			ZoomBucksAccount account = accountList.get(i);
-//			new ZoomBucksLabor(account, driver).start();
-			ZoomBucksLabor labor = new ZoomBucksLabor(account, driver);
-//			labor.silentMode();
-			labor.run();
-			driver.quit();
 			Thread.sleep(2000);
 		}
 //		startDaemon();
