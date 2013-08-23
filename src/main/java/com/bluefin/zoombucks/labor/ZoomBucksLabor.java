@@ -327,6 +327,8 @@ public class ZoomBucksLabor extends Thread {
 						selectIndex = optionsCount - 1;
 					}
 					select.selectByIndex(selectIndex);
+				} else if("textarea".equals(tagName)){
+					typeDetect.sendKeys("N/A");
 				} else {
 					try{
 						WebElement checkRadioContainer = driver.findElement(By.xpath("//td[@class='checkRadioContainer']"));
@@ -344,8 +346,16 @@ public class ZoomBucksLabor extends Thread {
 								if(totalChecked > 5){
 									totalChecked = 5;
 								}
+								
+								boolean[] bool = new boolean[listSize];
+								int index = 0;
 								for (int i = 0; i < totalChecked; i++) {
-									checkboxList.get(ra.nextInt(listSize)).click();
+									//防止两次点到一个checkbox造成空选
+									do {
+										index = ra.nextInt(listSize);
+									} while (bool[index]);
+									bool[index] = true;
+									checkboxList.get(index).click();
 								}
 							} else {
 								List<WebElement> radioList = driver.findElements(By.xpath("//input[@type='radio']"));

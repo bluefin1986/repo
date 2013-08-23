@@ -26,15 +26,15 @@ public class LaborTest {
 	
 	private void initDrivers(int accountCount){
 		driverList = new ArrayList<WebDriver>();
-//		String[] profiles = new String[]{
-//				"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium"
-//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/z8kseba1.selenium2"
-//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/sli4o4cr.selenium3"
-//				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/hd8ge2oz.selenium4"};
 		String[] profiles = new String[]{
-				"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/6v81xj5x.selenium2"
-				,"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1"
-		};
+				"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium"
+				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/z8kseba1.selenium2"
+				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/sli4o4cr.selenium3"
+				,"/Users/bluefin8603/Library/Application Support/Firefox/Profiles/hd8ge2oz.selenium4"};
+//		String[] profiles = new String[]{
+//				"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/6v81xj5x.selenium2"
+//				,"C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1"
+//		};
 		if(accountList.size() > profiles.length){
 			throw new RuntimeException("profile数量不够");
 		}
@@ -52,8 +52,8 @@ public class LaborTest {
 	}
 	
 	private FirefoxDriver generateFirefoxDriver(){
-//		File profilePath = new File("/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium");
-		File profilePath = new File("C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1");
+		File profilePath = new File("/Users/bluefin8603/Library/Application Support/Firefox/Profiles/pzodczhc.selenium");
+//		File profilePath = new File("C:/Documents and Settings/dvlp/Application Data/Mozilla/Firefox/Profiles/rx1c1n2i.selenium1");
 		FirefoxProfile fp = new FirefoxProfile(profilePath);
 		FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
 		firefoxDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
