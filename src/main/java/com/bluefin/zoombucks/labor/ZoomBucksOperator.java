@@ -35,4 +35,9 @@ public class ZoomBucksOperator {
 				+ zaccount.getFullName());
 		Thread.sleep(5000);
 	}
+	
+	public static void ssoToSurveySite(WebDriver driver, ZoomBucksAccount zaccount) throws InterruptedException{
+		driver.get("http://surveys.zoombucks.com/dashboard.php");
+		Thread.sleep(5000);
+	}
 }

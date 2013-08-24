@@ -171,12 +171,8 @@ public class ZoomBucksLabor extends Thread {
 	 * @throws InterruptedException
 	 */
 	private void clearFailedSearchEngineTasks() throws Exception{
-		driver.quit();
-		driver = WebDriverFactory.generateFirefoxDriver();
-		ZoomBucksOperator.login(driver, zaccount);
 		Map<String, SearchEngineTask> goingonMap = new HashMap<String, SearchEngineTask>(failedTaskMap);
 		failedTaskMap.clear();
-		ZoomBucksOperator.ssoToTaskSite(driver, zaccount);
 		processTasks(goingonMap);
 	}
 
@@ -243,24 +239,15 @@ public class ZoomBucksLabor extends Thread {
 		return drivers;
 	}
 	
-	private void quit(String originWindowHandle){
-		for (String windowHandle : driver.getWindowHandles()) {
-			if(windowHandle.equals(originWindowHandle)){
-				driver.switchTo().window(windowHandle).quit();
-			}
-		}
-	}
-	
 	public void runZoomBucksSurveys() throws Exception {
-		driver.get("http://surveys.zoombucks.com/dashboard.php");
-		Thread.sleep(5000);
+		ZoomBucksOperator.ssoToSurveySite(driver, zaccount);
 		List<WebElement> elements = null;
 		try {
 			elements = driver.findElements(By
 					.xpath("//div[@id='divProfileList']/ul/li"));
 		} catch (Exception e) {
-			WebElement element = driver.findElement(By.id("optCountryId"));
-			if (element != null) {
+			List<WebElement> optCountryIds = driver.findElements(By.id("optCountryId"));
+			if (optCountryIds != null && optCountryIds.size() > 0) {
 				System.out.println(zaccount.getFullName()
 						+ " survey not activated yet, activate survey");
 				activateSurvey();
@@ -268,125 +255,35 @@ public class ZoomBucksLabor extends Thread {
 				Thread.sleep(5000);
 			}
 		}
-		List<ProfileSurvey> surveys = new ArrayList<ProfileSurvey>();
+		TaskSummary taskSummary = new TaskSummary(elements.size());
+		Map<String, SearchEngineTask> taskMap = new HashMap<String, SearchEngineTask>();
 		for (WebElement webElement : elements) {
 			WebElement desc = webElement.findElement(By.xpath("span"));
 			WebElement anchr = webElement.findElement(By.xpath("a"));
-			String href = anchr.getAttribute("href");
-			surveys.add(new ProfileSurvey(desc.getText(), href, anchr.getText()));
-		}
-		for (int i = 0; i < surveys.size(); i++) {
-			ProfileSurvey profileSurvey = surveys.get(i);
-			String anchrText = profileSurvey.getAnchrText();
-			if (anchrText.contains("Zoom Bucks")) {
-				int bonus = 0;
-				try {
-					bonus = Integer.parseInt(anchrText
-							.replace("Zoom Bucks", "").trim());
-				} catch (Exception e) {
-				}
-				System.out.println("[" + profileSurvey.getSurveyDesc()
-						+ "] begin");
-				doSurvey(profileSurvey.getHref(), driver);
-				totalEarned += bonus;
-				System.out.println("[" + profileSurvey.getSurveyDesc()
-						+ "] finished " + bonus + " earned, total:"
-						+ totalEarned);
-				System.out.println(surveys.size() - i - 1 + " surveys rest");
+			int bonus = 0;
+			try {
+				bonus = Integer.parseInt(anchr.getText()
+						.replace("Zoom Bucks", "").trim());
+			} catch (Exception e) {
 			}
+			String href = anchr.getAttribute("href");
+			taskMap.put(href, new SearchEngineTask(desc.getText(), href, bonus));
 		}
+		
+		TaskPool taskPool = new TaskPool(taskMap);
+		new SurveySlave(driver, taskPool, taskSummary, zaccount).start();
+		List<WebDriver> drivers = openWindows(2);
+		for (WebDriver webDriver : drivers) {
+			new SurveySlave(webDriver, taskPool, taskSummary, zaccount.clone()).start();
+		}
+		while (!taskPool.isTasksFinished()) {
+			Thread.sleep(5000);
+		}
+		totalEarned += taskSummary.getTotalEarned();
 		System.out.println("all survey finished!");
 	}
 
-	private void doSurvey(String url, WebDriver driver)
-			throws InterruptedException {
-		driver.get(url);
-		By by = By.name("Next");
-		WebElement nextButton;
-		try {
-			while ((nextButton = driver.findElement(by)) != null) {
-				Thread.sleep(500);
-				WebElement questionTableNode = driver.findElement(By
-						.xpath("//td[@class='surveyInner-Table']"));
-
-				WebElement typeDetect = questionTableNode.findElement(By
-						.xpath("table/tbody/tr[2]/td/table/tbody/tr/td/*[1]"));
-				String tagName = typeDetect.getTagName();
-				Random ra = new Random();
-				if ("select".equals(tagName)) {
-					Select select = new Select(typeDetect);
-					int optionsCount = select.getOptions().size();
-					int selectIndex = ra.nextInt(optionsCount);
-					if (selectIndex < 2) {
-						selectIndex = optionsCount - 1;
-					}
-					select.selectByIndex(selectIndex);
-				} else if ("textarea".equals(tagName)) {
-					typeDetect.sendKeys("N/A");
-				} else {
-					try {
-						WebElement checkRadioContainer = driver.findElement(By
-								.xpath("//td[@class='checkRadioContainer']"));
-						if (checkRadioContainer != null) {
-							typeDetect = checkRadioContainer.findElement(By
-									.tagName("input"));
-							String type = typeDetect.getAttribute("type");
-							if ("checkbox".equals(type)) {
-								List<WebElement> checkboxList = driver
-										.findElements(By
-												.xpath("//input[@type='checkbox']"));
-								int listSize = checkboxList.size();
-								int totalChecked = ra.nextInt(listSize);
-								while (totalChecked == 0) {
-									totalChecked = ra.nextInt(listSize);
-								}
-								// 最多选5个提高效率
-								if (totalChecked > 5) {
-									totalChecked = 5;
-								}
-
-								for (int i = 0; i < totalChecked; i++) {
-									WebElement chkBox = checkboxList.get(i);
-									if(chkBox.isSelected()){
-										continue;
-									}
-									chkBox.click();
-								}
-							} else {
-								List<WebElement> radioList = driver
-										.findElements(By
-												.xpath("//input[@type='radio']"));
-								int listSize = radioList.size();
-								radioList.get(ra.nextInt(listSize)).click();
-							}
-						}
-					} catch (Exception e) {
-						System.err.println(e.getMessage());
-						WebElement tableRadioElement = driver.findElement(By
-								.xpath("//table[@class='tableBg']"));
-						List<WebElement> cols = tableRadioElement
-								.findElements(By
-										.xpath("tbody/tr/td/table/tbody/tr[1]/td"));
-						List<WebElement> rows = tableRadioElement
-								.findElements(By
-										.xpath("tbody/tr/td/table/tbody/tr"));
-						int colsCount = cols.size();
-						for (int i = 1; i < rows.size(); i++) {
-							List<WebElement> inputs = rows.get(i).findElements(
-									By.tagName("input"));
-							inputs.get(ra.nextInt(colsCount - 1)).click();
-						}
-					}
-				}
-				Thread.sleep(600);
-				nextButton.click();
-			}
-		} catch (NoSuchElementException e) {
-			System.err.println(e.getMessage());
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-		}
-	}
+	
 
 	private void registerPeanuts() throws Exception {
 		driver.get("http://www.zoombucks.com/peanutlabs.php");
