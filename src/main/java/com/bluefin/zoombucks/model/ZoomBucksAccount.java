@@ -1,6 +1,6 @@
 package com.bluefin.zoombucks.model;
 
-public class ZoomBucksAccount {
+public class ZoomBucksAccount implements Cloneable{
 
 	private String fullName;
 	
@@ -11,6 +11,8 @@ public class ZoomBucksAccount {
 	private String birthDateStr;
 	
 	private String gender;
+	
+	private boolean loggedIn;
 
 	public String getBirthDateStr() {
 		return birthDateStr;
@@ -52,5 +54,21 @@ public class ZoomBucksAccount {
 		this.password = password;
 	}
 	
-	
+	public boolean isLoggedIn() {
+		return loggedIn;
+	}
+
+	public void setLoggedIn(boolean loggedIn) {
+		this.loggedIn = loggedIn;
+	}
+
+	public ZoomBucksAccount clone(){
+		ZoomBucksAccount za = new ZoomBucksAccount();
+		za.setBirthDateStr(this.birthDateStr);
+		za.setEmail(this.email);
+		za.setFullName(this.fullName);
+		za.setPassword(this.password);
+		za.setGender(this.gender);
+		return za;
+	}
 }

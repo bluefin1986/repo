@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -24,14 +25,16 @@ import org.openqa.selenium.support.ui.Select;
 
 import com.bluefin.WebDriverFactory;
 import com.bluefin.zoombucks.LaborTest;
+import com.bluefin.zoombucks.TaskPool;
 import com.bluefin.zoombucks.model.CompareSearchEngineTask;
 import com.bluefin.zoombucks.model.ProfileSurvey;
 import com.bluefin.zoombucks.model.SearchEngineTask;
+import com.bluefin.zoombucks.model.TaskSummary;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
 public class ZoomBucksLabor extends Thread {
 
-	private ZoomBucksAccount zaccount;
+	protected ZoomBucksAccount zaccount;
 
 	private boolean silentMode = false;
 
@@ -40,9 +43,15 @@ public class ZoomBucksLabor extends Thread {
 	private List<String> failedUrls;
 
 	private WebDriver driver;
+	
+	private String originWindowHandle;
 
 	private Map<String, SearchEngineTask> failedTaskMap = new HashMap<String, SearchEngineTask>();
 
+	public ZoomBucksLabor(){
+		
+	}
+	
 	public ZoomBucksLabor(ZoomBucksAccount zaccount, WebDriver driver) {
 		this.zaccount = zaccount;
 		this.driver = driver;
@@ -51,7 +60,7 @@ public class ZoomBucksLabor extends Thread {
 	public void run() {
 		Date begin = new Date();
 		try {
-			login();
+			ZoomBucksOperator.login(driver, zaccount);
 		} catch (Exception e1) {
 			System.out.println("login failed ,register account:"
 					+ zaccount.getFullName());
@@ -121,26 +130,6 @@ public class ZoomBucksLabor extends Thread {
 		Thread.sleep(5000);
 	}
 
-	private void login() throws Exception {
-		System.out.println("login " + zaccount.getFullName());
-		driver.manage().deleteAllCookies();
-		driver.navigate().refresh();
-		String baseUrl = "http://www.zoombucks.com";
-		driver.get("http://www.zoombucks.com/login.php?logout");
-		driver.get(baseUrl + "/");
-		driver.findElement(By.linkText("Login")).click();
-		driver.findElement(By.id("username")).clear();
-		driver.findElement(By.id("username")).sendKeys(zaccount.getFullName());
-		driver.findElement(By.id("password")).clear();
-		driver.findElement(By.id("password")).sendKeys(zaccount.getPassword());
-		driver.findElement(By.cssSelector("button.btn")).click();
-		String url = driver.getCurrentUrl();
-		if ("http://www.zoombucks.com/login.php".equals(url)) {
-			throw new Exception(zaccount.getFullName() + "not registed yet!");
-		}
-		String points = driver.findElement(By.id("points")).getText();
-		System.out.println(zaccount.getFullName() + " 登录成功 , points: " + points);
-	}
 
 	private List<String> loadTaskUrls(WebElement taskListTable) {
 		List<WebElement> taskListTrs = taskListTable.findElements(By
@@ -184,149 +173,15 @@ public class ZoomBucksLabor extends Thread {
 	private void clearFailedSearchEngineTasks() throws Exception{
 		driver.quit();
 		driver = WebDriverFactory.generateFirefoxDriver();
-		login();
-		Map<String, SearchEngineTask> cloneMap = new HashMap<String, SearchEngineTask>(failedTaskMap);
+		ZoomBucksOperator.login(driver, zaccount);
+		Map<String, SearchEngineTask> goingonMap = new HashMap<String, SearchEngineTask>(failedTaskMap);
 		failedTaskMap.clear();
-		ssoToTaskSite();
-		doSearchEngineTasks(cloneMap);
+		ZoomBucksOperator.ssoToTaskSite(driver, zaccount);
+		processTasks(goingonMap);
 	}
 
-	/**
-	 * 执行搜索引擎task
-	 * @param searchEngineTaskMap
-	 * @throws InterruptedException
-	 */
-	private void doSearchEngineTasks( Map<String, SearchEngineTask> searchEngineTaskMap) throws InterruptedException {
-		int totalCount = searchEngineTaskMap.size();
-		System.out.println("total task count:" + totalCount);
-		Random ra = new Random();
-		int progressCount = 0;
-		int failCount = 0;
-		
-		for (Iterator<String> it = searchEngineTaskMap.keySet().iterator(); it.hasNext();) {
-			String taskKey = it.next();
-			String content = loadInputContent();
-			progressCount++;
-			SearchEngineTask searchEngineTask = searchEngineTaskMap.get(taskKey);
-			System.out.println("now:" + searchEngineTask.getTaskHref());
-			driver.get(searchEngineTask.getTaskHref());
-			Thread.sleep(1000);
-			WebElement submit = null;
-			try {
-				List<WebElement> elements = driver.findElements(By
-						.xpath("//div[@class='hero-unit']/h1"));
-				if (elements.size() > 0) {
-					WebElement ele = elements.get(0);
-					String text = ele.getText();
-					if (text.startsWith("You've")) {
-						throw new Exception("already done!");
-					}
-					System.out.println("text:" + text);
-					if(text.startsWith("There is") || text.startsWith("This task")){
-						throw new Exception("unknown");
-					}
-				}
-				submit = driver
-						.findElement(By.xpath("//input[@type='submit']"));
-			} catch (Exception e) {
-				System.err.println(e.getMessage());
-				failCount++;
-				failedTaskMap.put(taskKey, searchEngineTask);
-				System.out.println("total tasks: " + totalCount
-						+ ", rest tasks:" + (totalCount - progressCount - 1)
-						+ ", failed:" + failCount);
-				continue;
-			}
-			// 选择所有的下拉
-			List<WebElement> selects = driver
-					.findElements(By.xpath("//select"));
-			for (WebElement selElement : selects) {
-				Select sel = new Select(selElement);
-				int length = sel.getOptions().size();
-				int pickIndex = ra.nextInt(length);
-				if (pickIndex < 2) {
-					pickIndex = 2;
-				}
-				sel.selectByIndex(pickIndex);
-			}
-			boolean isInput = false;
-			boolean meetRegexError = false;
-			// 填写input内容
-			try {
-				List<WebElement> questionDivs = driver.findElements(By
-						.xpath("//div[@class='text cml_field']"));
-				if (questionDivs.size() == 0) {
-					throw new Exception("not found text inputs");
-				}
-				for (WebElement div : questionDivs) {
-					WebElement input = div.findElement(By.tagName("input"));
-					if (input == null) {
-						System.out.println("not exist");
-					}
-					String answer = div.getAttribute("data-validates-regex");
-					if (answer.startsWith("(")) {
-						JavascriptExecutor executor = (JavascriptExecutor) driver;
-						executor.executeScript("arguments[0].parentNode.removeChild(arguments[0])", input);
-						// if(silentMode){
-						// failedUrls.add(searchEngineTask.getTaskHref());
-						// meetRegexError = true;
-						// break;
-						// }
-//						JOptionPane.showMessageDialog(null,
-//										"found phone num task, should be handled manually");
-					} else {
-						input.sendKeys(answer);
-					}
-				}
-				isInput = true;
-			} catch (Exception ex) {
-				System.out.println("inputs not found:" + ex.getMessage());
-			}
-			// 填写textarea内容
-			try {
-				if (isInput) {
-					throw new Exception("not textarea task");
-				}
-				List<WebElement> textAreas = driver.findElements(By
-						.xpath("//textarea"));
-				for (WebElement textArea : textAreas) {
-					int beginIndex = ra.nextInt(content.length());
-					if (beginIndex == content.length()
-							|| content.length() - beginIndex > 30) {
-						beginIndex = content.length() - 30;
-					}
-					textArea.sendKeys(content.substring(beginIndex));
-				}
-			} catch (Exception ex) {
-				System.out.println("text areas not found:" + ex.getMessage());
-			}
-			if (meetRegexError) {
-				failCount++;
-				failedTaskMap.put(taskKey, searchEngineTask);
-			} else {
-				// 提交
-				submit.click();
-				totalEarned += searchEngineTask.getBonus();
-				String desc = searchEngineTask.getTaskDesc().length() == 0 ? searchEngineTask.getTaskHref() : searchEngineTask.getTaskDesc();
-				System.out.println("[" + desc
-						+ "] finished. " + searchEngineTask.getBonus()
-						+ " bonus earned, total:" + totalEarned);
-				System.out.println("total tasks: " + totalCount + ", rest tasks:"
-					+ (totalCount - progressCount - 1) + ", failed:"
-					+ failCount);
-			}
-		}
-	}
-	
-	private void ssoToTaskSite() throws InterruptedException{
-		driver.get("http://www.zoombucks.com/tasks.php");
-		driver.get("http://crowdflower.com/judgments/zoombucks?uid="
-				+ zaccount.getFullName());
-		Thread.sleep(5000);
-	}
-
-	private void runZoomBucksTask() throws Exception {
-		ssoToTaskSite();
+	public void runZoomBucksTask() throws Exception {
+		ZoomBucksOperator.ssoToTaskSite(driver, zaccount);
 		List<String> pageHrefs = new ArrayList<String>();
 		List<WebElement> pageButtons = driver.findElements(By
 				.xpath("//nav[@class='pagination']/span/a"));
@@ -359,23 +214,43 @@ public class ZoomBucksLabor extends Thread {
 			SearchEngineTask searchEngineTask = iterator.next();
 			goingOnTaskMap.put(searchEngineTask.getTaskHref(), searchEngineTask);
 		}
-		doSearchEngineTasks(goingOnTaskMap);
+		processTasks(goingOnTaskMap);
 		System.out.println("all tasks finished! now try clear failed tasks!");
 		Thread.sleep(2000);
 		clearFailedSearchEngineTasks();
 	}
-
-	private String loadInputContent() {
-		try {
-			String content = FileUtils.readFileToString(new File(
-					"src/main/resources/InputContent.txt"));
-			return content;
-		} catch (IOException e) {
-			e.printStackTrace();
+	
+	private void processTasks(Map<String, SearchEngineTask> taskMap) throws InterruptedException{
+		TaskPool taskPool = new TaskPool(taskMap);
+		List<WebDriver> newTabs = openWindows(2);
+		TaskSummary summary = new TaskSummary(taskMap.size());
+		for (WebDriver webDriver : newTabs) {
+			new SearchEngineTaskLabor(webDriver, taskPool, summary, zaccount.clone()).start();
 		}
-		return "Presidents Day may refer to: Presidents Day (United States), a holiday in some regions";
+		//自己也别浪费了
+		new SearchEngineTaskLabor(driver, taskPool, summary, zaccount).start();
+		while (!taskPool.isTasksFinished()) {
+			Thread.sleep(5000);
+		}
 	}
-
+	
+	private List<WebDriver> openWindows(int windowsCount){
+		List<WebDriver> drivers = new ArrayList<WebDriver>();
+		for (int i = 0; i < windowsCount; i++) {
+			WebDriver driver = WebDriverFactory.generateFirefoxDriver();
+			drivers.add(driver);
+		}
+		return drivers;
+	}
+	
+	private void quit(String originWindowHandle){
+		for (String windowHandle : driver.getWindowHandles()) {
+			if(windowHandle.equals(originWindowHandle)){
+				driver.switchTo().window(windowHandle).quit();
+			}
+		}
+	}
+	
 	public void runZoomBucksSurveys() throws Exception {
 		driver.get("http://surveys.zoombucks.com/dashboard.php");
 		Thread.sleep(5000);
@@ -470,15 +345,12 @@ public class ZoomBucksLabor extends Thread {
 									totalChecked = 5;
 								}
 
-								boolean[] bool = new boolean[listSize];
-								int index = 0;
 								for (int i = 0; i < totalChecked; i++) {
-									// 防止两次点到一个checkbox造成空选
-									do {
-										index = ra.nextInt(listSize);
-									} while (bool[index]);
-									bool[index] = true;
-									checkboxList.get(index).click();
+									WebElement chkBox = checkboxList.get(i);
+									if(chkBox.isSelected()){
+										continue;
+									}
+									chkBox.click();
 								}
 							} else {
 								List<WebElement> radioList = driver
@@ -663,8 +535,10 @@ public class ZoomBucksLabor extends Thread {
 			loginRewardTv();
 		}
 		if ("http://www.rewardtv.com/play/relogin.sdo".equals(url)) {
+			driver.findElement(By.xpath("/html/body/div/table/tbody/tr/td/div/a")).click();
 			loginRewardTv();
 		}
+		Thread.sleep(2000);
 		System.out.println("rewardTv registed!");
 	}
 
