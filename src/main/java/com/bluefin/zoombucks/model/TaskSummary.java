@@ -9,6 +9,8 @@ public class TaskSummary {
 	
 	private int progressCount = 0;
 	
+	private int finishCount = 0;
+	
 	private int failCount = 0;
 	
 	public TaskSummary(int taskCount){
@@ -46,5 +48,14 @@ public class TaskSummary {
 	
 	public synchronized void taskPassed(){
 		this.progressCount++;
+	}
+	
+	public synchronized void plusFinished(){
+		this.finishCount++;
+	}
+	
+	public boolean isFinished() {
+		
+		return taskCount == finishCount;
 	}
 }

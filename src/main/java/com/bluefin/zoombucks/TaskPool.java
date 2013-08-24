@@ -19,10 +19,6 @@ public class TaskPool {
 		it = this.taskMap.values().iterator();
 	}
 	
-	public boolean isTasksFinished(){
-		return this.taskMap.size() == 0;
-	}
-	
 	public Map<String, SearchEngineTask> getFailedTaskMap(){
 		return this.failedTaskMap;
 	}

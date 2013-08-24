@@ -40,13 +40,9 @@ public class ZoomBucksLabor extends Thread {
 
 	private int totalEarned;
 
-	private List<String> failedUrls;
-
 	private WebDriver driver;
 	
-	private String originWindowHandle;
-
-	private Map<String, SearchEngineTask> failedTaskMap = new HashMap<String, SearchEngineTask>();
+	private Map<String, SearchEngineTask> failedTaskMap;
 
 	public ZoomBucksLabor(){
 		
@@ -113,6 +109,7 @@ public class ZoomBucksLabor extends Thread {
 
 	private void register() throws Exception {
 		driver.get("http://www.zoombucks.com/");
+		Thread.sleep(4000);
 		driver.findElement(By.id("email")).sendKeys(zaccount.getEmail());
 		driver.findElement(By.id("fullname")).sendKeys(zaccount.getFullName());
 		driver.findElement(By.id("textInput")).sendKeys(zaccount.getPassword());
@@ -128,21 +125,6 @@ public class ZoomBucksLabor extends Thread {
 				zaccount.getBirthDateStr());
 		driver.findElement(By.tagName("form")).submit();
 		Thread.sleep(5000);
-	}
-
-
-	private List<String> loadTaskUrls(WebElement taskListTable) {
-		List<WebElement> taskListTrs = taskListTable.findElements(By
-				.xpath("tbody/tr"));
-		List<String> urls = new ArrayList<String>();
-		for (WebElement taskTr : taskListTrs) {
-			WebElement taskDesc = taskTr.findElement(By
-					.xpath("td[2]/section/h1/a"));
-			if (taskDesc.getText().trim().startsWith("Find the search engine")) {
-				urls.add(taskDesc.getAttribute("href"));
-			}
-		}
-		return urls;
 	}
 
 	private List<SearchEngineTask> loadTasks(WebElement taskListTable) {
@@ -171,9 +153,8 @@ public class ZoomBucksLabor extends Thread {
 	 * @throws InterruptedException
 	 */
 	private void clearFailedSearchEngineTasks() throws Exception{
-		Map<String, SearchEngineTask> goingonMap = new HashMap<String, SearchEngineTask>(failedTaskMap);
-		failedTaskMap.clear();
-		processTasks(goingonMap);
+		processTasks(failedTaskMap);
+		failedTaskMap = null;
 	}
 
 	public void runZoomBucksTask() throws Exception {
@@ -223,11 +204,15 @@ public class ZoomBucksLabor extends Thread {
 		for (WebDriver webDriver : newTabs) {
 			new SearchEngineTaskLabor(webDriver, taskPool, summary, zaccount.clone()).start();
 		}
-		//自己也别浪费了
-		new SearchEngineTaskLabor(driver, taskPool, summary, zaccount).start();
-		while (!taskPool.isTasksFinished()) {
+		//主线程不要掺和failed的事情
+		if(this.failedTaskMap == null){
+			new SearchEngineTaskLabor(driver, taskPool, summary, zaccount).start();
+		}
+		
+		while (!summary.isFinished()) {
 			Thread.sleep(5000);
 		}
+		this.failedTaskMap = taskPool.getFailedTaskMap();
 	}
 	
 	private List<WebDriver> openWindows(int windowsCount){
@@ -255,7 +240,7 @@ public class ZoomBucksLabor extends Thread {
 				Thread.sleep(5000);
 			}
 		}
-		TaskSummary taskSummary = new TaskSummary(elements.size());
+		
 		Map<String, SearchEngineTask> taskMap = new HashMap<String, SearchEngineTask>();
 		for (WebElement webElement : elements) {
 			WebElement desc = webElement.findElement(By.xpath("span"));
@@ -270,20 +255,30 @@ public class ZoomBucksLabor extends Thread {
 			taskMap.put(href, new SearchEngineTask(desc.getText(), href, bonus));
 		}
 		
+		processSurveys(taskMap);
+		System.out.println("all survey finished! now clear failed surveys");
+		clearFailedSurveys();
+	}
+	
+	private void clearFailedSurveys() throws InterruptedException{
+		processSurveys(this.failedTaskMap);
+		this.failedTaskMap = null;
+	}
+
+	private void processSurveys(Map<String, SearchEngineTask> taskMap) throws InterruptedException{
+		TaskSummary taskSummary = new TaskSummary(taskMap.size());
 		TaskPool taskPool = new TaskPool(taskMap);
 		new SurveySlave(driver, taskPool, taskSummary, zaccount).start();
 		List<WebDriver> drivers = openWindows(2);
 		for (WebDriver webDriver : drivers) {
 			new SurveySlave(webDriver, taskPool, taskSummary, zaccount.clone()).start();
 		}
-		while (!taskPool.isTasksFinished()) {
+		while (!taskSummary.isFinished()) {
 			Thread.sleep(5000);
 		}
 		totalEarned += taskSummary.getTotalEarned();
-		System.out.println("all survey finished!");
+		this.failedTaskMap = taskPool.getFailedTaskMap();
 	}
-
-	
 
 	private void registerPeanuts() throws Exception {
 		driver.get("http://www.zoombucks.com/peanutlabs.php");

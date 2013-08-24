@@ -34,9 +34,11 @@ public class SurveySlave extends Thread{
 	public void run(){
 		SearchEngineTask task;
 		try {
+			boolean isSlaveThread = false;
 			if(!zaccount.isLoggedIn()){
 				ZoomBucksOperator.login(driver, zaccount);
 				ZoomBucksOperator.ssoToSurveySite(driver, zaccount);
+				isSlaveThread = true;
 			}
 			while ((task = taskPool.getSearchEngineTask()) != null) {
 				try {
@@ -45,13 +47,16 @@ public class SurveySlave extends Thread{
 					e.printStackTrace();
 				}
 			}
-			driver.quit();
+			if(isSlaveThread){
+				driver.quit();
+			}
 		} catch (Exception e1) {
 			throw new RuntimeException("login failed!");
 		}
 	}
 	
 	private void doSurvey(SearchEngineTask task) throws InterruptedException {
+		taskSummary.taskPassed();
 		System.out.println("[" + task.getTaskDesc() + "] begin");
 		driver.get(task.getTaskHref());
 		By by = By.name("Next");
@@ -131,18 +136,28 @@ public class SurveySlave extends Thread{
 						}
 					}
 				}
-				Thread.sleep(600);
 				nextButton.click();
+				Thread.sleep(600);
+				try {
+					driver.findElement(By.xpath("//td[@class='surveyInner-Table']"));
+				} catch (Exception e) {
+					Thread.sleep(5000);
+				}
 			}
-			taskSummary.plusEarned(task.getBonus());
-			System.out.println("[" + task.getTaskDesc()
-					+ "] finished " + task.getBonus() + " earned, total:"
-					+ taskSummary.getTotalEarned());
 		} catch (Exception e) {
-			System.err.println(e.getMessage());
-			taskSummary.plusFailed();
+			try {
+				driver.findElement(By.cssSelector("div.confirmBox"));
+				taskSummary.plusEarned(task.getBonus());
+				System.out.println("[" + task.getTaskDesc()
+						+ "] finished " + task.getBonus() + " earned, total:"
+						+ taskSummary.getTotalEarned());
+			} catch (Exception e2) {
+				e.printStackTrace();
+				e2.printStackTrace();
+				taskSummary.plusFailed();
+			}
 		}
-		taskSummary.taskPassed();
+		taskSummary.plusFinished();
 		System.out.println(taskSummary.getRestTaskCount() + " surveys rest");
 	}
 }
