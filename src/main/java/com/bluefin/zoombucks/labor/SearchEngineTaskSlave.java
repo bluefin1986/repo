@@ -17,7 +17,7 @@ import com.bluefin.zoombucks.model.SearchEngineTask;
 import com.bluefin.zoombucks.model.TaskSummary;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
-public class SearchEngineTaskLabor extends Thread {
+public class SearchEngineTaskSlave extends Thread {
 
 	private WebDriver driver;
 
@@ -27,7 +27,7 @@ public class SearchEngineTaskLabor extends Thread {
 
 	private ZoomBucksAccount zaccount;
 
-	public SearchEngineTaskLabor(WebDriver driver, TaskPool taskPool,
+	public SearchEngineTaskSlave(WebDriver driver, TaskPool taskPool,
 			TaskSummary taskSummary, ZoomBucksAccount zaccount) {
 		this.driver = driver;
 		this.taskPool = taskPool;
@@ -46,6 +46,7 @@ public class SearchEngineTaskLabor extends Thread {
 			}
 
 		} catch (Exception e1) {
+			driver.quit();
 			throw new RuntimeException("login failed!");
 		}
 		while ((task = taskPool.getSearchEngineTask()) != null) {

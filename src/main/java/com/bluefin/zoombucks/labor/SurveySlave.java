@@ -57,12 +57,32 @@ public class SurveySlave extends Thread{
 	
 	private void doSurvey(SearchEngineTask task) throws InterruptedException {
 		taskSummary.taskPassed();
-		System.out.println("[" + task.getTaskDesc() + "] begin");
+		System.out.println("[" + task.getTaskDesc() + "] " + task.getTaskHref() + " begin");
 		driver.get(task.getTaskHref());
+		Thread.sleep(3000);
 		By by = By.name("Next");
 		WebElement nextButton;
 		try {
-			while ((nextButton = driver.findElement(by)) != null) {
+			while (true) {
+				try {
+					nextButton = driver.findElement(by);
+				} catch (Exception e) {
+					boolean successed = false;
+					if(driver.findElements(By.xpath("//div[@class='confirmBox']")).size() > 0){
+						successed = true;
+					}
+					if(driver.findElements(By.id("profiles")).size() > 0){
+						successed = true;
+					}
+					if(successed){
+						taskSummary.plusEarned(task.getBonus());
+						System.out.println("[" + task.getTaskDesc()
+								+ "] finished " + task.getBonus() + " earned, total:"
+								+ taskSummary.getTotalEarned());
+						break;
+					}
+					continue;
+				}
 				Thread.sleep(500);
 				WebElement questionTableNode = driver.findElement(By
 						.xpath("//td[@class='surveyInner-Table']"));
@@ -104,7 +124,7 @@ public class SurveySlave extends Thread{
 								}
 
 								for (int i = 0; i < totalChecked; i++) {
-									WebElement chkBox = checkboxList.get(i);
+									WebElement chkBox = checkboxList.get(ra.nextInt(listSize));
 									if(chkBox.isSelected()){
 										continue;
 									}
@@ -139,23 +159,23 @@ public class SurveySlave extends Thread{
 				nextButton.click();
 				Thread.sleep(600);
 				try {
-					driver.findElement(By.xpath("//td[@class='surveyInner-Table']"));
+					List<WebElement> inputs = driver.findElements(By.id("quest_no"));
+					if(inputs.size() > 0){
+						inputs.get(0).click();
+						driver.findElement(By.xpath("//button[@class='button-dashboard']")).click();
+						taskSummary.plusEarned(task.getBonus());
+						System.out.println("[" + task.getTaskDesc()
+								+ "] finished " + task.getBonus() + " earned, total:"
+								+ taskSummary.getTotalEarned());
+						break;
+					}
 				} catch (Exception e) {
 					Thread.sleep(5000);
 				}
 			}
 		} catch (Exception e) {
-			try {
-				driver.findElement(By.cssSelector("div.confirmBox"));
-				taskSummary.plusEarned(task.getBonus());
-				System.out.println("[" + task.getTaskDesc()
-						+ "] finished " + task.getBonus() + " earned, total:"
-						+ taskSummary.getTotalEarned());
-			} catch (Exception e2) {
-				e.printStackTrace();
-				e2.printStackTrace();
-				taskSummary.plusFailed();
-			}
+			taskPool.addFailTask(task);
+			e.printStackTrace();
 		}
 		taskSummary.plusFinished();
 		System.out.println(taskSummary.getRestTaskCount() + " surveys rest");

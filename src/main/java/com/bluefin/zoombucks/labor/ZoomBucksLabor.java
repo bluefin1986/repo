@@ -69,6 +69,11 @@ public class ZoomBucksLabor extends Thread {
 							+ e.getMessage());
 				}
 				try {
+					claimFourBucks();
+				} catch (Exception e) {
+					System.err.println("claim 4 bucks failed:" + e.getMessage());
+				}
+				try {
 					activateSurvey();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -106,13 +111,18 @@ public class ZoomBucksLabor extends Thread {
 				+ (end.getTime() - begin.getTime()) / 60000 + " mins");
 		driver.quit();
 	}
+	
+	private void claimFourBucks(){
+		driver.get("http://www.zoombucks.com/promotional_code.php");
+		driver.findElement(By.id("promotional_code")).sendKeys("ILOVEFREESTUFF");
+		driver.findElement(By.id("form")).submit();
+	}
 
 	private void register() throws Exception {
 		driver.get("http://www.zoombucks.com/");
-		Thread.sleep(4000);
 		driver.findElement(By.id("email")).sendKeys(zaccount.getEmail());
 		driver.findElement(By.id("fullname")).sendKeys(zaccount.getFullName());
-		driver.findElement(By.id("textInput")).sendKeys(zaccount.getPassword());
+		driver.findElement(By.id("pswdInput")).sendKeys(zaccount.getPassword());
 		driver.findElement(By.id("accept_terms")).click();
 		driver.findElement(By.xpath("//div[@class='submitbtn']/button"))
 				.click();
@@ -201,14 +211,13 @@ public class ZoomBucksLabor extends Thread {
 		TaskPool taskPool = new TaskPool(taskMap);
 		List<WebDriver> newTabs = openWindows(2);
 		TaskSummary summary = new TaskSummary(taskMap.size());
-		for (WebDriver webDriver : newTabs) {
-			new SearchEngineTaskLabor(webDriver, taskPool, summary, zaccount.clone()).start();
-		}
 		//主线程不要掺和failed的事情
 		if(this.failedTaskMap == null){
-			new SearchEngineTaskLabor(driver, taskPool, summary, zaccount).start();
+			new SearchEngineTaskSlave(driver, taskPool, summary, zaccount).start();
 		}
-		
+		for (WebDriver webDriver : newTabs) {
+			new SearchEngineTaskSlave(webDriver, taskPool, summary, zaccount.clone()).start();
+		}
 		while (!summary.isFinished()) {
 			Thread.sleep(5000);
 		}
@@ -250,6 +259,7 @@ public class ZoomBucksLabor extends Thread {
 				bonus = Integer.parseInt(anchr.getText()
 						.replace("Zoom Bucks", "").trim());
 			} catch (Exception e) {
+				continue;
 			}
 			String href = anchr.getAttribute("href");
 			taskMap.put(href, new SearchEngineTask(desc.getText(), href, bonus));
@@ -269,7 +279,7 @@ public class ZoomBucksLabor extends Thread {
 		TaskSummary taskSummary = new TaskSummary(taskMap.size());
 		TaskPool taskPool = new TaskPool(taskMap);
 		new SurveySlave(driver, taskPool, taskSummary, zaccount).start();
-		List<WebDriver> drivers = openWindows(2);
+		List<WebDriver> drivers = openWindows(2 > taskMap.size() ? taskMap.size() : 2);
 		for (WebDriver webDriver : drivers) {
 			new SurveySlave(webDriver, taskPool, taskSummary, zaccount.clone()).start();
 		}
