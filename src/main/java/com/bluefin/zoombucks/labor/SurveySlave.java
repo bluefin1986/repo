@@ -71,7 +71,7 @@ public class SurveySlave extends Thread{
 					if(driver.findElements(By.xpath("//div[@class='confirmBox']")).size() > 0){
 						successed = true;
 					}
-					if(driver.findElements(By.id("profiles")).size() > 0){
+					if(!successed && driver.findElements(By.id("profiles")).size() > 0){
 						successed = true;
 					}
 					if(successed){
@@ -158,20 +158,20 @@ public class SurveySlave extends Thread{
 				}
 				nextButton.click();
 				Thread.sleep(600);
-				try {
-					List<WebElement> inputs = driver.findElements(By.id("quest_no"));
-					if(inputs.size() > 0){
-						inputs.get(0).click();
-						driver.findElement(By.xpath("//button[@class='button-dashboard']")).click();
-						taskSummary.plusEarned(task.getBonus());
-						System.out.println("[" + task.getTaskDesc()
-								+ "] finished " + task.getBonus() + " earned, total:"
-								+ taskSummary.getTotalEarned());
-						break;
-					}
-				} catch (Exception e) {
-					Thread.sleep(5000);
-				}
+//				try {
+//					List<WebElement> inputs = driver.findElements(By.id("quest_no"));
+//					if(inputs.size() > 0){
+//						inputs.get(0).click();
+//						driver.findElement(By.xpath("//button[@class='button-dashboard']")).click();
+//						taskSummary.plusEarned(task.getBonus());
+//						System.out.println("[" + task.getTaskDesc()
+//								+ "] finished " + task.getBonus() + " earned, total:"
+//								+ taskSummary.getTotalEarned());
+//						break;
+//					}
+//				} catch (Exception e) {
+//					Thread.sleep(5000);
+//				}
 			}
 		} catch (Exception e) {
 			taskPool.addFailTask(task);
