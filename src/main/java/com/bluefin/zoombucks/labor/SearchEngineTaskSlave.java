@@ -12,8 +12,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
+import com.bluefin.base.Task;
 import com.bluefin.zoombucks.TaskPool;
-import com.bluefin.zoombucks.model.SearchEngineTask;
 import com.bluefin.zoombucks.model.TaskSummary;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
@@ -26,6 +26,8 @@ public class SearchEngineTaskSlave extends Thread {
 	private TaskSummary taskSummary;
 
 	private ZoomBucksAccount zaccount;
+	
+	private ZoomBucksOperator operator = new ZoomBucksOperator();
 
 	public SearchEngineTaskSlave(WebDriver driver, TaskPool taskPool,
 			TaskSummary taskSummary, ZoomBucksAccount zaccount) {
@@ -36,12 +38,12 @@ public class SearchEngineTaskSlave extends Thread {
 	}
 
 	public void run() {
-		SearchEngineTask task;
+		Task task;
 		boolean isSlaveThread = false;
 		try {
 			if (!zaccount.isLoggedIn()) {
-				ZoomBucksOperator.login(driver, zaccount);
-				ZoomBucksOperator.ssoToTaskSite(driver, zaccount);
+				operator.login(driver, zaccount);
+				operator.ssoToTaskSite(driver, zaccount);
 				isSlaveThread = true;
 			}
 
@@ -67,7 +69,7 @@ public class SearchEngineTaskSlave extends Thread {
 	 * @param searchEngineTaskMap
 	 * @throws InterruptedException
 	 */
-	private void doSearchEngineTasks(SearchEngineTask searchEngineTask)
+	private void doSearchEngineTasks(Task searchEngineTask)
 			throws InterruptedException {
 		try {
 			taskSummary.taskPassed();

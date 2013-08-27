@@ -20,9 +20,9 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.Select;
 
+import com.bluefin.base.Task;
 import com.bluefin.zoombucks.model.CompareSearchEngineTask;
 import com.bluefin.zoombucks.model.ProfileSurvey;
-import com.bluefin.zoombucks.model.SearchEngineTask;
 
 public class SurveyTest {
 
@@ -138,15 +138,15 @@ public class SurveyTest {
 		System.out.println("gogogo");
 	}
 	
-	private List<SearchEngineTask> loadTasks(WebDriver driver, WebElement taskListTable){
+	private List<Task> loadTasks(WebDriver driver, WebElement taskListTable){
 		List<WebElement> taskListTrs = taskListTable.findElements(By.xpath("tbody/tr"));
-		List<SearchEngineTask> tasks = new ArrayList<SearchEngineTask>();
+		List<Task> tasks = new ArrayList<Task>();
 		for (WebElement taskTr : taskListTrs) {
 			WebElement bonusValue = taskTr.findElement(By.xpath("td[1]/hgroup/a/h1"));
 			WebElement taskDesc = taskTr.findElement(By.xpath("td[2]/section/h1/a"));
 			if(taskDesc.getText().startsWith("Find the search engine")){
 				int bonus = Integer.parseInt(bonusValue.getText());
-				SearchEngineTask tsk = new SearchEngineTask(taskDesc.getText(), taskDesc.getAttribute("href"), bonus);
+				Task tsk = new Task(taskDesc.getText(), taskDesc.getAttribute("href"), bonus);
 				tasks.add(tsk);
 			}
 		}
@@ -168,7 +168,7 @@ public class SurveyTest {
 			}
 		}
 		WebElement taskListTable = driver.findElement(By.xpath("//table[@class='task-listing']"));
-		List<SearchEngineTask> tasks = loadTasks(driver, taskListTable);
+		List<Task> tasks = loadTasks(driver, taskListTable);
 		
 		for (String href : pageHrefs) {
 			driver.get(href);
@@ -183,7 +183,7 @@ public class SurveyTest {
 		int totalBonus = 0;
 		int failCount = 0;
 		for (int i = 0; i< tasks.size(); i++) {
-			SearchEngineTask searchEngineTask = tasks.get(i);
+			Task searchEngineTask = tasks.get(i);
 			driver.get(searchEngineTask.getTaskHref());
 			Thread.sleep(1000);
 			WebElement submit = null;

@@ -3,11 +3,12 @@ package com.bluefin.zoombucks.labor;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
+import com.bluefin.base.Operator;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
-public class ZoomBucksOperator {
+public class ZoomBucksOperator implements Operator<ZoomBucksAccount>{
 
-	public static void login(WebDriver driver, ZoomBucksAccount zaccount) throws Exception{
+	public void login(WebDriver driver, ZoomBucksAccount zaccount) throws Exception{
 		System.out.println("login " + zaccount.getFullName());
 		driver.manage().deleteAllCookies();
 		driver.navigate().refresh();
@@ -29,14 +30,14 @@ public class ZoomBucksOperator {
 		zaccount.setLoggedIn(true);
 	}
 	
-	public static void ssoToTaskSite(WebDriver driver, ZoomBucksAccount zaccount) throws InterruptedException{
+	public void ssoToTaskSite(WebDriver driver, ZoomBucksAccount zaccount) throws InterruptedException{
 		driver.get("http://www.zoombucks.com/tasks.php");
 		driver.get("http://crowdflower.com/judgments/zoombucks?uid="
 				+ zaccount.getFullName());
 		Thread.sleep(5000);
 	}
 	
-	public static void ssoToSurveySite(WebDriver driver, ZoomBucksAccount zaccount) throws InterruptedException{
+	public void ssoToSurveySite(WebDriver driver, ZoomBucksAccount zaccount) throws InterruptedException{
 		driver.get("http://surveys.zoombucks.com/dashboard.php");
 		Thread.sleep(5000);
 	}

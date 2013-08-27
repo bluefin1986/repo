@@ -24,11 +24,11 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
 import com.bluefin.WebDriverFactory;
+import com.bluefin.base.Task;
 import com.bluefin.zoombucks.LaborTest;
 import com.bluefin.zoombucks.TaskPool;
 import com.bluefin.zoombucks.model.CompareSearchEngineTask;
 import com.bluefin.zoombucks.model.ProfileSurvey;
-import com.bluefin.zoombucks.model.SearchEngineTask;
 import com.bluefin.zoombucks.model.TaskSummary;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
@@ -42,10 +42,12 @@ public class ZoomBucksLabor extends Thread {
 
 	private WebDriver driver;
 	
-	private Map<String, SearchEngineTask> failedTaskMap;
+	private Map<String, Task> failedTaskMap;
+	
+	private ZoomBucksOperator operator;
 
 	public ZoomBucksLabor(){
-		
+		operator = new ZoomBucksOperator();
 	}
 	
 	public ZoomBucksLabor(ZoomBucksAccount zaccount, WebDriver driver) {
@@ -56,7 +58,7 @@ public class ZoomBucksLabor extends Thread {
 	public void run() {
 		Date begin = new Date();
 		try {
-			ZoomBucksOperator.login(driver, zaccount);
+			operator.login(driver, zaccount);
 		} catch (Exception e1) {
 			System.out.println("login failed ,register account:"
 					+ zaccount.getFullName());
@@ -137,10 +139,10 @@ public class ZoomBucksLabor extends Thread {
 		Thread.sleep(5000);
 	}
 
-	private List<SearchEngineTask> loadTasks(WebElement taskListTable) {
+	private List<Task> loadTasks(WebElement taskListTable) {
 		List<WebElement> taskListTrs = taskListTable.findElements(By
 				.xpath("tbody/tr"));
-		List<SearchEngineTask> tasks = new ArrayList<SearchEngineTask>();
+		List<Task> tasks = new ArrayList<Task>();
 		for (WebElement taskTr : taskListTrs) {
 			WebElement bonusValue = taskTr.findElement(By
 					.xpath("td[1]/hgroup/a/h1"));
@@ -148,7 +150,7 @@ public class ZoomBucksLabor extends Thread {
 					.xpath("td[2]/section/h1/a"));
 			if (taskDesc.getText().trim().startsWith("Find the search engine")) {
 				int bonus = Integer.parseInt(bonusValue.getText());
-				SearchEngineTask tsk = new SearchEngineTask(taskDesc.getText(),
+				Task tsk = new Task(taskDesc.getText(),
 						taskDesc.getAttribute("href"), bonus);
 				tasks.add(tsk);
 			}
@@ -168,7 +170,7 @@ public class ZoomBucksLabor extends Thread {
 	}
 
 	public void runZoomBucksTask() throws Exception {
-		ZoomBucksOperator.ssoToTaskSite(driver, zaccount);
+		operator.ssoToTaskSite(driver, zaccount);
 		List<String> pageHrefs = new ArrayList<String>();
 		List<WebElement> pageButtons = driver.findElements(By
 				.xpath("//nav[@class='pagination']/span/a"));
@@ -182,10 +184,10 @@ public class ZoomBucksLabor extends Thread {
 		}
 		WebElement taskListTable = driver.findElement(By
 				.xpath("//table[@class='task-listing']"));
-		 List<SearchEngineTask> tasks = loadTasks(taskListTable);
+		 List<Task> tasks = loadTasks(taskListTable);
 //		List<String> taskUrls = loadTaskUrls(taskListTable);
 		// 载入预置的所有task列表
-		Map<String, SearchEngineTask> goingOnTaskMap = new HashMap<String, SearchEngineTask>();
+		Map<String, Task> goingOnTaskMap = new HashMap<String, Task>();
 		goingOnTaskMap.putAll(LaborTest.taskMap);
 		// 页面所有已显示的tasks
 		for (String href : pageHrefs) {
@@ -197,8 +199,8 @@ public class ZoomBucksLabor extends Thread {
 //			taskUrls.addAll(loadTaskUrls(taskListTable));
 		}
 		// 筛除已显示的
-		for (Iterator<SearchEngineTask> iterator = tasks.iterator(); iterator.hasNext();) {
-			SearchEngineTask searchEngineTask = iterator.next();
+		for (Iterator<Task> iterator = tasks.iterator(); iterator.hasNext();) {
+			Task searchEngineTask = iterator.next();
 			goingOnTaskMap.put(searchEngineTask.getTaskHref(), searchEngineTask);
 		}
 		processTasks(goingOnTaskMap);
@@ -207,7 +209,7 @@ public class ZoomBucksLabor extends Thread {
 		clearFailedSearchEngineTasks();
 	}
 	
-	private void processTasks(Map<String, SearchEngineTask> taskMap) throws InterruptedException{
+	private void processTasks(Map<String, Task> taskMap) throws InterruptedException{
 		TaskPool taskPool = new TaskPool(taskMap);
 		List<WebDriver> newTabs = openWindows(2);
 		TaskSummary summary = new TaskSummary(taskMap.size());
@@ -234,7 +236,7 @@ public class ZoomBucksLabor extends Thread {
 	}
 	
 	public void runZoomBucksSurveys() throws Exception {
-		ZoomBucksOperator.ssoToSurveySite(driver, zaccount);
+		operator.ssoToSurveySite(driver, zaccount);
 		List<WebElement> elements = null;
 		try {
 			elements = driver.findElements(By
@@ -250,7 +252,7 @@ public class ZoomBucksLabor extends Thread {
 			}
 		}
 		
-		Map<String, SearchEngineTask> taskMap = new HashMap<String, SearchEngineTask>();
+		Map<String, Task> taskMap = new HashMap<String, Task>();
 		for (WebElement webElement : elements) {
 			WebElement desc = webElement.findElement(By.xpath("span"));
 			WebElement anchr = webElement.findElement(By.xpath("a"));
@@ -262,7 +264,7 @@ public class ZoomBucksLabor extends Thread {
 				continue;
 			}
 			String href = anchr.getAttribute("href");
-			taskMap.put(href, new SearchEngineTask(desc.getText(), href, bonus));
+			taskMap.put(href, new Task(desc.getText(), href, bonus));
 		}
 		
 		processSurveys(taskMap);
@@ -275,7 +277,7 @@ public class ZoomBucksLabor extends Thread {
 		this.failedTaskMap = null;
 	}
 
-	private void processSurveys(Map<String, SearchEngineTask> taskMap) throws InterruptedException{
+	private void processSurveys(Map<String, Task> taskMap) throws InterruptedException{
 		TaskSummary taskSummary = new TaskSummary(taskMap.size());
 		TaskPool taskPool = new TaskPool(taskMap);
 		new SurveySlave(driver, taskPool, taskSummary, zaccount).start();
@@ -454,8 +456,8 @@ public class ZoomBucksLabor extends Thread {
 		this.silentMode = true;
 	}
 
-	public static Map<String, SearchEngineTask> loadTaskMap() {
-		Map<String, SearchEngineTask> map = new HashMap<String, SearchEngineTask>();
+	public static Map<String, Task> loadTaskMap() {
+		Map<String, Task> map = new HashMap<String, Task>();
 		try {
 			String content = FileUtils.readFileToString(new File(
 					"src/main/resources/tasks.txt"));
@@ -464,7 +466,7 @@ public class ZoomBucksLabor extends Thread {
 			for (int i = 0; i < urls.length; i++) {
 				String taskUrl = urls[i];
 //				String taskId = taskUrl.substring(taskUrl.lastIndexOf("/") + 1);
-				map.put(taskUrl, new SearchEngineTask("", taskUrl , 6));
+				map.put(taskUrl, new Task("", taskUrl , 6));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

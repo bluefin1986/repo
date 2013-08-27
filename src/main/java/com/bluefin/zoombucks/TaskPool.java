@@ -4,35 +4,35 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.bluefin.zoombucks.model.SearchEngineTask;
+import com.bluefin.base.Task;
 
 public class TaskPool {
 
-	private Map<String, SearchEngineTask> taskMap;
+	private Map<String, Task> taskMap;
 	
-	private Map<String, SearchEngineTask> failedTaskMap = new HashMap<String, SearchEngineTask>();
+	private Map<String, Task> failedTaskMap = new HashMap<String, Task>();
 	
-	private Iterator<SearchEngineTask> it;
+	private Iterator<Task> it;
 	
-	public TaskPool(Map<String, SearchEngineTask> taskMap){
+	public TaskPool(Map<String, Task> taskMap){
 		this.taskMap = taskMap;
 		it = this.taskMap.values().iterator();
 	}
 	
-	public Map<String, SearchEngineTask> getFailedTaskMap(){
+	public Map<String, Task> getFailedTaskMap(){
 		return this.failedTaskMap;
 	}
 	
-	public synchronized SearchEngineTask getSearchEngineTask(){
+	public synchronized Task getSearchEngineTask(){
 		if(it.hasNext()){
-			SearchEngineTask task = it.next();
+			Task task = it.next();
 			it.remove();
 			return task;
 		}
 		return null;
 	}
 	
-	public synchronized void addFailTask(SearchEngineTask task){
+	public synchronized void addFailTask(Task task){
 		this.failedTaskMap.put(task.getTaskHref(), task);
 	}
 	

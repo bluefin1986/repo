@@ -1,65 +1,65 @@
-package com.bluefin.zoombucks.labor;
+package com.bluefin.askmesurveys.labor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
 
+import com.bluefin.askmesurveys.model.AskmeSurveyAccount;
 import com.bluefin.base.Task;
-import com.bluefin.zoombucks.TaskPool;
-import com.bluefin.zoombucks.model.TaskSummary;
-import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
-public class SurveySlave extends Thread{
+public class AskmeSurveyLabor{
+
+	private AskmeSurveyAccount asAccount;
 	
 	private WebDriver driver;
-
-	private TaskPool taskPool;
-
-	private TaskSummary taskSummary;
 	
-	private ZoomBucksAccount zaccount;
+	private AskmeSurveysOperator operator = new AskmeSurveysOperator();
 	
-	private ZoomBucksOperator operator;
-	
-	public SurveySlave(WebDriver driver, TaskPool taskPool, TaskSummary taskSummary,ZoomBucksAccount zaccount) {
+	public AskmeSurveyLabor(WebDriver driver, AskmeSurveyAccount asAccount){
 		this.driver = driver;
-		this.taskPool = taskPool;
-		this.zaccount = zaccount;
-		this.taskSummary = taskSummary;
-		operator = new ZoomBucksOperator();
+		this.asAccount = asAccount;
 	}
 	
-	public void run(){
-		Task task;
-		try {
-			boolean isSlaveThread = false;
-			if(!zaccount.isLoggedIn()){
-				operator.login(driver, zaccount);
-				operator.ssoToSurveySite(driver, zaccount);
-				isSlaveThread = true;
+	
+	public void runProfileSurveys() throws Exception{
+		operator.login(driver, asAccount);
+		
+		driver.get("https://www.askmesurveys.com/dashboard.php");
+		List<WebElement> surveys = driver.findElements(By.xpath("//div[@id='divProfileList']/ul/li"));
+		List<Task> taskList = new ArrayList<Task>();
+		for (WebElement survey : surveys) {
+			WebElement anchr = survey.findElement(By.tagName("a"));
+			String bonusDesc = anchr.getText();
+			if(!bonusDesc.startsWith("Earn $")){
+				continue;
 			}
-			while ((task = taskPool.getSearchEngineTask()) != null) {
-				try {
-					doSurvey(task);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+			float bonus = 0.0f;
+			try {
+				bonus = Float.parseFloat(bonusDesc.replace("Earn $", "").trim());
+			} catch (Exception e) {
+				// TODO: handle exception
 			}
-			if(isSlaveThread){
-				driver.quit();
+			String href = anchr.getAttribute("href");
+			String desc = survey.findElement(By.tagName("span")).getText();
+			Task task = new Task(desc, href, bonus);
+			taskList.add(task);
+		}
+		for (Task task : taskList) {
+			try {
+				doSurvey(task);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e1) {
-			throw new RuntimeException("login failed!");
 		}
 	}
 	
 	private void doSurvey(Task task) throws InterruptedException {
-		taskSummary.taskPassed();
+//		taskSummary.taskPassed();
 		System.out.println("[" + task.getTaskDesc() + "] " + task.getTaskHref() + " begin");
 		driver.get(task.getTaskHref());
 		Thread.sleep(3000);
@@ -78,10 +78,10 @@ public class SurveySlave extends Thread{
 						successed = true;
 					}
 					if(successed){
-						taskSummary.plusEarned(task.getBonus());
-						System.out.println("[" + task.getTaskDesc()
-								+ "] finished " + task.getBonus() + " earned, total:"
-								+ taskSummary.getTotalEarned());
+//						taskSummary.plusEarned(task.getBonus());
+//						System.out.println("[" + task.getTaskDesc()
+//								+ "] finished " + task.getBonus() + " earned, total:"
+//								+ taskSummary.getTotalEarned());
 						break;
 					}
 					continue;
@@ -161,26 +161,12 @@ public class SurveySlave extends Thread{
 				}
 				nextButton.click();
 				Thread.sleep(600);
-//				try {
-//					List<WebElement> inputs = driver.findElements(By.id("quest_no"));
-//					if(inputs.size() > 0){
-//						inputs.get(0).click();
-//						driver.findElement(By.xpath("//button[@class='button-dashboard']")).click();
-//						taskSummary.plusEarned(task.getBonus());
-//						System.out.println("[" + task.getTaskDesc()
-//								+ "] finished " + task.getBonus() + " earned, total:"
-//								+ taskSummary.getTotalEarned());
-//						break;
-//					}
-//				} catch (Exception e) {
-//					Thread.sleep(5000);
-//				}
 			}
 		} catch (Exception e) {
-			taskPool.addFailTask(task);
+//			taskPool.addFailTask(task);
 			e.printStackTrace();
 		}
-		taskSummary.plusFinished();
-		System.out.println(taskSummary.getRestTaskCount() + " surveys rest");
+//		taskSummary.plusFinished();
+//		System.out.println(taskSummary.getRestTaskCount() + " surveys rest");
 	}
 }

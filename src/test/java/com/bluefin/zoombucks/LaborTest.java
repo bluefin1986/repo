@@ -14,9 +14,10 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 
 import com.bluefin.WebDriverFactory;
+import com.bluefin.base.Operator;
+import com.bluefin.base.Task;
 import com.bluefin.zoombucks.labor.ZoomBucksLabor;
 import com.bluefin.zoombucks.labor.ZoomBucksOperator;
-import com.bluefin.zoombucks.model.SearchEngineTask;
 import com.bluefin.zoombucks.model.ZoomBucksAccount;
 
 public class LaborTest {
@@ -27,7 +28,7 @@ public class LaborTest {
 
 	private boolean[] finishFlags;
 	
-	public static Map<String, SearchEngineTask> taskMap = null;
+	public static Map<String, Task> taskMap = null;
 	
 	private void initDrivers(int accountCount){
 		driverList = new ArrayList<WebDriver>();
@@ -115,11 +116,12 @@ public class LaborTest {
 //	@Test
 	public void testZoombucksTasks(){
 		WebDriver driver = WebDriverFactory.generateFirefoxDriver();
+		Operator<ZoomBucksAccount> operator = new ZoomBucksOperator();
 		for (int i = 0; i < accountList.size(); i++) {
 			ZoomBucksAccount zaccount = accountList.get(i);
 			ZoomBucksLabor zoombucksLabor = new ZoomBucksLabor(zaccount, driver);
 			try {
-				ZoomBucksOperator.login(driver, zaccount);
+				operator.login(driver, zaccount);
 				zoombucksLabor.runZoomBucksTask();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

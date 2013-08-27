@@ -1,14 +1,14 @@
-package com.bluefin.zoombucks.model;
+package com.bluefin.base;
 
-public class SearchEngineTask implements Comparable<SearchEngineTask>{
+public class Task implements Comparable<Task>{
 
 	private String taskDesc;
 	
 	private String taskHref;
 	
-	private int bonus;
+	private float bonus;
 	
-	public SearchEngineTask(String taskDesc, String taskHref, int bonus){
+	public Task(String taskDesc, String taskHref, float bonus){
 		this.taskDesc = taskDesc;
 		this.taskHref = taskHref;
 		this.bonus = bonus;
@@ -30,16 +30,16 @@ public class SearchEngineTask implements Comparable<SearchEngineTask>{
 		this.taskHref = taskHref;
 	}
 
-	public int getBonus() {
+	public float getBonus() {
 		return bonus;
 	}
 
-	public void setBonus(int bonus) {
+	public void setBonus(float bonus) {
 		this.bonus = bonus;
 	}
 
 	@Override
-	public int compareTo(SearchEngineTask o) {
+	public int compareTo(Task o) {
 		if(o.getBonus() > this.getBonus()){
 			return 1;
 		} else if(o.getBonus() < this.getBonus()){

@@ -5,7 +5,7 @@ public class TaskSummary {
 
 	private int taskCount;
 	
-	private int totalEarned = 0;
+	private float totalEarned = 0;
 	
 	private int progressCount = 0;
 	
@@ -21,7 +21,7 @@ public class TaskSummary {
 		return taskCount;
 	}
 	
-	public int getTotalEarned() {
+	public float getTotalEarned() {
 		return totalEarned;
 	}
 	
@@ -38,7 +38,7 @@ public class TaskSummary {
 	}
 	
 	
-	public synchronized void plusEarned(int bonus){
+	public synchronized void plusEarned(float bonus){
 		this.totalEarned += bonus;
 	}
 	

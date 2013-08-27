@@ -1,11 +1,12 @@
-package com.bluefin.zoombucks.model;
+package com.bluefin.askmesurveys.model;
 
 import com.bluefin.base.AbstractAccount;
 
-public class ZoomBucksAccount extends AbstractAccount{
+public class AskmeSurveyAccount extends AbstractAccount{
 
-	public ZoomBucksAccount clone(){
-		ZoomBucksAccount za = new ZoomBucksAccount();
+	@Override
+	public AskmeSurveyAccount clone() {
+		AskmeSurveyAccount za = new AskmeSurveyAccount();
 		za.setBirthDateStr(this.birthDateStr);
 		za.setEmail(this.email);
 		za.setFullName(this.fullName);
@@ -13,4 +14,5 @@ public class ZoomBucksAccount extends AbstractAccount{
 		za.setGender(this.gender);
 		return za;
 	}
+
 }
