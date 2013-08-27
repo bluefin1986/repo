@@ -13,6 +13,7 @@ public class AskmeSurveysTest {
 	public void testSurvey() throws Exception{
 		AskmeSurveyAccount account = new AskmeSurveyAccount();
 		account.setFullName("hookglurey@hotmail.com");
+		account.setEmail(account.getFullName());
 		account.setPassword("baoziazhu609");
 		WebDriver driver = WebDriverFactory.generateFirefoxDriver();
 		AskmeSurveyLabor labor = new AskmeSurveyLabor(driver, account);

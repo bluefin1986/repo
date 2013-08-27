@@ -12,35 +12,36 @@ import org.openqa.selenium.support.ui.Select;
 import com.bluefin.askmesurveys.model.AskmeSurveyAccount;
 import com.bluefin.base.Task;
 
-public class AskmeSurveyLabor{
+public class AskmeSurveyLabor {
 
 	private AskmeSurveyAccount asAccount;
-	
+
 	private WebDriver driver;
-	
+
 	private AskmeSurveysOperator operator = new AskmeSurveysOperator();
-	
-	public AskmeSurveyLabor(WebDriver driver, AskmeSurveyAccount asAccount){
+
+	public AskmeSurveyLabor(WebDriver driver, AskmeSurveyAccount asAccount) {
 		this.driver = driver;
 		this.asAccount = asAccount;
 	}
-	
-	
-	public void runProfileSurveys() throws Exception{
+
+	public void runProfileSurveys() throws Exception {
 		operator.login(driver, asAccount);
-		
+
 		driver.get("https://www.askmesurveys.com/dashboard.php");
-		List<WebElement> surveys = driver.findElements(By.xpath("//div[@id='divProfileList']/ul/li"));
+		List<WebElement> surveys = driver.findElements(By
+				.xpath("//div[@id='divProfileList']/ul/li"));
 		List<Task> taskList = new ArrayList<Task>();
 		for (WebElement survey : surveys) {
 			WebElement anchr = survey.findElement(By.tagName("a"));
 			String bonusDesc = anchr.getText();
-			if(!bonusDesc.startsWith("Earn $")){
+			if (!bonusDesc.startsWith("Earn $")) {
 				continue;
 			}
 			float bonus = 0.0f;
 			try {
-				bonus = Float.parseFloat(bonusDesc.replace("Earn $", "").trim());
+				bonus = Float
+						.parseFloat(bonusDesc.replace("Earn $", "").trim());
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
@@ -57,10 +58,11 @@ public class AskmeSurveyLabor{
 			}
 		}
 	}
-	
+
 	private void doSurvey(Task task) throws InterruptedException {
-//		taskSummary.taskPassed();
-		System.out.println("[" + task.getTaskDesc() + "] " + task.getTaskHref() + " begin");
+		// taskSummary.taskPassed();
+		System.out.println("[" + task.getTaskDesc() + "] " + task.getTaskHref()
+				+ " begin");
 		driver.get(task.getTaskHref());
 		Thread.sleep(3000);
 		By by = By.name("Next");
@@ -71,17 +73,19 @@ public class AskmeSurveyLabor{
 					nextButton = driver.findElement(by);
 				} catch (Exception e) {
 					boolean successed = false;
-					if(driver.findElements(By.xpath("//div[@class='confirmBox']")).size() > 0){
+					if (driver.findElements(
+							By.xpath("//div[@class='confirmBox']")).size() > 0) {
 						successed = true;
 					}
-					if(!successed && driver.findElements(By.id("profiles")).size() > 0){
+					if (!successed
+							&& driver.findElements(By.id("profiles")).size() > 0) {
 						successed = true;
 					}
-					if(successed){
-//						taskSummary.plusEarned(task.getBonus());
-//						System.out.println("[" + task.getTaskDesc()
-//								+ "] finished " + task.getBonus() + " earned, total:"
-//								+ taskSummary.getTotalEarned());
+					if (successed) {
+						// taskSummary.plusEarned(task.getBonus());
+						// System.out.println("[" + task.getTaskDesc()
+						// + "] finished " + task.getBonus() + " earned, total:"
+						// + taskSummary.getTotalEarned());
 						break;
 					}
 					continue;
@@ -90,56 +94,60 @@ public class AskmeSurveyLabor{
 				WebElement questionTableNode = driver.findElement(By
 						.xpath("//td[@class='surveyInner-Table']"));
 
-				WebElement typeDetect = questionTableNode.findElement(By
-						.xpath("table/tbody/tr[2]/td/table/tbody/tr/td/*[1]"));
-				String tagName = typeDetect.getTagName();
+				List<WebElement> typeDetect = questionTableNode.findElements(By
+						.xpath("//td[@class='checkRadioContainer']/input"));
+				WebElement typeDetectElement;
+				String detectTagName = "";
 				Random ra = new Random();
-				if ("select".equals(tagName)) {
-					Select select = new Select(typeDetect);
-					int optionsCount = select.getOptions().size();
-					int selectIndex = ra.nextInt(optionsCount);
-					if (selectIndex < 2) {
-						selectIndex = optionsCount - 1;
-					}
-					select.selectByIndex(selectIndex);
-				} else if ("textarea".equals(tagName)) {
-					typeDetect.sendKeys("N/A");
-				} else {
+				if (typeDetect.size() == 0) {
 					try {
-						WebElement checkRadioContainer = driver.findElement(By
-								.xpath("//td[@class='checkRadioContainer']"));
-						if (checkRadioContainer != null) {
-							typeDetect = checkRadioContainer.findElement(By
-									.tagName("input"));
-							String type = typeDetect.getAttribute("type");
-							if ("checkbox".equals(type)) {
-								List<WebElement> checkboxList = driver
-										.findElements(By
-												.xpath("//input[@type='checkbox']"));
-								int listSize = checkboxList.size();
-								int totalChecked = ra.nextInt(listSize);
-								while (totalChecked == 0) {
-									totalChecked = ra.nextInt(listSize);
-								}
-								// 最多选5个提高效率
-								if (totalChecked > 5) {
-									totalChecked = 5;
-								}
+						typeDetectElement = questionTableNode.findElement(By
+								.tagName("select"));
+						Select select = new Select(typeDetectElement);
+						int optionsCount = select.getOptions().size();
+						int selectIndex = ra.nextInt(optionsCount);
+						if (selectIndex < 2) {
+							selectIndex = optionsCount - 1;
+						}
+						select.selectByIndex(selectIndex);
+					} catch (Exception e) {
+						typeDetectElement = questionTableNode.findElement(By
+								.tagName("textarea"));
+						typeDetectElement.sendKeys("N/A");
+					}
 
-								for (int i = 0; i < totalChecked; i++) {
-									WebElement chkBox = checkboxList.get(ra.nextInt(listSize));
-									if(chkBox.isSelected()){
-										continue;
-									}
-									chkBox.click();
-								}
-							} else {
-								List<WebElement> radioList = driver
-										.findElements(By
-												.xpath("//input[@type='radio']"));
-								int listSize = radioList.size();
-								radioList.get(ra.nextInt(listSize)).click();
+				} else {
+					typeDetectElement = typeDetect.get(0);
+
+					try {
+						String type = typeDetectElement.getAttribute("type");
+						if ("checkbox".equals(type)) {
+							List<WebElement> checkboxList = driver
+									.findElements(By
+											.xpath("//input[@type='checkbox']"));
+							int listSize = checkboxList.size();
+							int totalChecked = ra.nextInt(listSize);
+							while (totalChecked == 0) {
+								totalChecked = ra.nextInt(listSize);
 							}
+							// 最多选5个提高效率
+							if (totalChecked > 5) {
+								totalChecked = 5;
+							}
+
+							for (int i = 0; i < totalChecked; i++) {
+								WebElement chkBox = checkboxList.get(ra
+										.nextInt(listSize));
+								if (chkBox.isSelected()) {
+									continue;
+								}
+								chkBox.click();
+							}
+						} else {
+							List<WebElement> radioList = driver.findElements(By
+									.xpath("//input[@type='radio']"));
+							int listSize = radioList.size();
+							radioList.get(ra.nextInt(listSize)).click();
 						}
 					} catch (Exception e) {
 						System.err.println(e.getMessage());
@@ -163,10 +171,10 @@ public class AskmeSurveyLabor{
 				Thread.sleep(600);
 			}
 		} catch (Exception e) {
-//			taskPool.addFailTask(task);
+			// taskPool.addFailTask(task);
 			e.printStackTrace();
 		}
-//		taskSummary.plusFinished();
-//		System.out.println(taskSummary.getRestTaskCount() + " surveys rest");
+		// taskSummary.plusFinished();
+		// System.out.println(taskSummary.getRestTaskCount() + " surveys rest");
 	}
 }
