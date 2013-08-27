@@ -97,7 +97,6 @@ public class AskmeSurveyLabor {
 				List<WebElement> typeDetect = questionTableNode.findElements(By
 						.xpath("//td[@class='checkRadioContainer']/input"));
 				WebElement typeDetectElement;
-				String detectTagName = "";
 				Random ra = new Random();
 				if (typeDetect.size() == 0) {
 					try {
@@ -108,6 +107,9 @@ public class AskmeSurveyLabor {
 						int selectIndex = ra.nextInt(optionsCount);
 						if (selectIndex < 2) {
 							selectIndex = optionsCount - 1;
+						}
+						if(selectIndex > 10){
+							selectIndex = 10;
 						}
 						select.selectByIndex(selectIndex);
 					} catch (Exception e) {
