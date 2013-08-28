@@ -113,9 +113,30 @@ public class AskmeSurveyLabor {
 						}
 						select.selectByIndex(selectIndex);
 					} catch (Exception e) {
-						typeDetectElement = questionTableNode.findElement(By
-								.tagName("textarea"));
-						typeDetectElement.sendKeys("N/A");
+						try {
+							typeDetectElement = questionTableNode.findElement(By
+									.tagName("textarea"));
+							typeDetectElement.sendKeys("N/A");
+						} catch (Exception e2) {
+							try {
+								WebElement tableRadioElement = driver.findElement(By
+										.xpath("//table[@class='tableBg']"));
+								List<WebElement> cols = tableRadioElement
+										.findElements(By
+												.xpath("tbody/tr/td/table/tbody/tr[1]/td"));
+								List<WebElement> rows = tableRadioElement
+										.findElements(By
+												.xpath("tbody/tr/td/table/tbody/tr"));
+								int colsCount = cols.size();
+								for (int i = 1; i < rows.size(); i++) {
+									List<WebElement> inputs = rows.get(i).findElements(
+											By.tagName("input"));
+									inputs.get(ra.nextInt(colsCount - 1)).click();
+								}
+							} catch (Exception e3) {
+								e3.printStackTrace();
+							}
+						}
 					}
 
 				} else {
@@ -153,20 +174,6 @@ public class AskmeSurveyLabor {
 						}
 					} catch (Exception e) {
 						System.err.println(e.getMessage());
-						WebElement tableRadioElement = driver.findElement(By
-								.xpath("//table[@class='tableBg']"));
-						List<WebElement> cols = tableRadioElement
-								.findElements(By
-										.xpath("tbody/tr/td/table/tbody/tr[1]/td"));
-						List<WebElement> rows = tableRadioElement
-								.findElements(By
-										.xpath("tbody/tr/td/table/tbody/tr"));
-						int colsCount = cols.size();
-						for (int i = 1; i < rows.size(); i++) {
-							List<WebElement> inputs = rows.get(i).findElements(
-									By.tagName("input"));
-							inputs.get(ra.nextInt(colsCount - 1)).click();
-						}
 					}
 				}
 				nextButton.click();

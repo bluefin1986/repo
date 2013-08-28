@@ -83,9 +83,9 @@ public class CheckinTest {
 		driver.findElement(
 				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li/div"))
 				.click();
-		driver.findElement(
-				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li/div"))
-				.click();
+//		driver.findElement(
+//				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li/div"))
+//				.click();
 		Thread.sleep(1000);
 		driver.findElement(
 				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li[2]/div"))
@@ -95,8 +95,11 @@ public class CheckinTest {
 		driver.findElement(
 				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li[3]/div"))
 				.click();
+//		driver.findElement(
+//				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li[3]/div"))
+//				.click();
 		driver.findElement(
-				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li[3]/div"))
+				By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li/div/a"))
 				.click();
 		Thread.sleep(1000);
 		// new CloseWindows(driver).start();
