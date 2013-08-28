@@ -51,6 +51,7 @@ public class ZoomBucksLabor extends Thread {
 	}
 	
 	public ZoomBucksLabor(ZoomBucksAccount zaccount, WebDriver driver) {
+		this();
 		this.zaccount = zaccount;
 		this.driver = driver;
 	}
@@ -88,6 +89,11 @@ public class ZoomBucksLabor extends Thread {
 				return;
 			}
 
+		}
+		try {
+			testWatchVideo();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		try {
 			registerPeanuts();
@@ -138,6 +144,68 @@ public class ZoomBucksLabor extends Thread {
 		driver.findElement(By.tagName("form")).submit();
 		Thread.sleep(5000);
 	}
+	
+	public void testWatchVideo(){
+		String earnUrl = "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
+		boolean finished = false;
+		int count = 0;
+		try {
+			WebElement element = driver.findElement(By.id("dob_month"));
+			Select selMonth = new Select(element);
+			selMonth.selectByIndex(5);
+			element = driver.findElement(By.id("dob_day"));
+			Select selDay = new Select(element);
+			selDay.selectByIndex(6);
+			element = driver.findElement(By.id("dob_year"));
+			Select selYear = new Select(element);
+			selYear.selectByIndex(26);
+			driver.findElement(By.id("demosubmitimg")).click();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		while(count < 10 && !finished){
+			try {
+				driver.get(earnUrl);
+				WebElement bodyContent = driver.findElement(By.tagName("body"));
+				String content = bodyContent.getText();
+				if("No Videos available.".equals(content.trim())){
+					break;
+				}
+				try{
+					WebElement frame = driver.findElement(By.tagName("iframe"));
+					WebDriver frameDriver = driver.switchTo().frame(0);
+					try {
+						WebElement player = frameDriver.findElement(By.id("player"));
+						player.click();
+						while(true){
+							List<WebElement> header = frameDriver.findElements(By.xpath("//div[@id='ty_header']"));
+							((JavascriptExecutor) frameDriver).executeScript("arguments[0].click();", player);
+							if(header.size() > 0){
+								WebElement headerElement = header.get(0);
+								if(!headerElement.getText().startsWith("You've")){
+									Thread.sleep(10000);
+									continue;
+								}
+							} 
+							break;
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}catch(Exception ex){
+					ex.printStackTrace();
+				}
+//				WebElement earnButton = driver.findElement(By.id("webtraffic_start_button_text"));
+//				earnButton.click();
+				count++;
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+			System.out.println("2 earned");
+		}
+		
+		System.out.println("gogogo");
+	}
 
 	private List<Task> loadTasks(WebElement taskListTable) {
 		List<WebElement> taskListTrs = taskListTable.findElements(By
@@ -158,8 +226,6 @@ public class ZoomBucksLabor extends Thread {
 		return tasks;
 	}
 
-	
-	
 	/**
 	 * 扫尾失败的任务
 	 * @throws InterruptedException
