@@ -101,6 +101,9 @@ public class CheckinTest {
 		driver.findElement(
 				By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li/div/a"))
 				.click();
+		driver.findElement(
+				By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li[2]/div/a"))
+				.click();
 		Thread.sleep(1000);
 		// new CloseWindows(driver).start();
 		Set<String> windows = driver.getWindowHandles();
