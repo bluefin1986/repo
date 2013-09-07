@@ -3,10 +3,13 @@ package com.bluefin.zoombucks;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.WebDriver;
@@ -29,6 +32,8 @@ public class LaborTest {
 	private boolean[] finishFlags;
 	
 	public static Map<String, Task> taskMap = null;
+	
+	public static Map<String, String> ANSWER_MAP = new HashMap<String, String>();
 	
 	private void initDrivers(int accountCount){
 		driverList = new ArrayList<WebDriver>();
@@ -59,31 +64,32 @@ public class LaborTest {
 	
 	@Before
 	public void init() throws IOException {
+		LaborTest.ANSWER_MAP = loadAnswerMap();
 		taskMap = ZoomBucksLabor.loadTaskMap();
 		
 		accountList = new ArrayList<ZoomBucksAccount>();
 		
 		ZoomBucksAccount acct0 = new ZoomBucksAccount();
 		acct0.setBirthDateStr("19811101");
-		acct0.setFullName("queen_fanceble");
-		acct0.setEmail("queen_fanceble@gmail.com");
+		acct0.setFullName("hookglurey");
+		acct0.setEmail("albin_whoools@hotmail.com");
 		acct0.setGender("M");
 		acct0.setPassword("baoziazhu609");
 		accountList.add(acct0);
 		ZoomBucksAccount acct = new ZoomBucksAccount();
 		acct.setBirthDateStr("19761101");
-		acct.setFullName("emior_younky");
-		acct.setEmail("emior_younky@hotmail.com");
+		acct.setFullName("hooji_claixor");
+		acct.setEmail("hooji_claixor@hotmail.com");
 		acct.setGender("M");
 		acct.setPassword("baoziazhu609");
 		accountList.add(acct);
-		ZoomBucksAccount acct1 = new ZoomBucksAccount();
-		acct1.setBirthDateStr("19810211");
-		acct1.setFullName("broono_lawe");
-		acct1.setEmail("broono_lawe@hotmail.com");
-		acct1.setGender("F");
-		acct1.setPassword("baoziazhu609");
-		accountList.add(acct1);
+//		ZoomBucksAccount acct1 = new ZoomBucksAccount();
+//		acct1.setBirthDateStr("19810211");
+//		acct1.setFullName("broono_lawe");
+//		acct1.setEmail("broono_lawe@hotmail.com");
+//		acct1.setGender("F");
+//		acct1.setPassword("baoziazhu609");
+//		accountList.add(acct1);
 //		ZoomBucksAccount acct2 = new ZoomBucksAccount();
 //		acct2.setBirthDateStr("19860511");
 //		acct2.setFullName("james_dingous");
@@ -148,4 +154,24 @@ public class LaborTest {
 			}
 		}
 	}
+	
+	public Map<String, String> loadAnswerMap() {
+		Map<String, String> map = new HashMap<String, String>();
+		try {
+			String content = FileUtils.readFileToString(new File(
+					"src/main/resources/answers.txt"));
+			String[] answers = content.split("\n");
+			for (String answer : answers) {
+				if(StringUtils.isBlank(answer)){
+					continue;
+				}
+				String[] answerSplit = answer.split("&&");
+				map.put(answerSplit[0], answerSplit[1]);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return map;
+	}
+	
 }

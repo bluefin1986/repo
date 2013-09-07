@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.sikuli.webdriver.SikuliFirefoxDriver;
 
 public class WebDriverFactory {
 	
@@ -41,7 +42,8 @@ public class WebDriverFactory {
 			profilePath = new File(profilesMacOs[index]);
 		}
 		FirefoxProfile fp = new FirefoxProfile(profilePath);
-		FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
+//		FirefoxDriver firefoxDriver = new FirefoxDriver(fp);
+		SikuliFirefoxDriver firefoxDriver = new SikuliFirefoxDriver(fp);
 		firefoxDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		return firefoxDriver;
 	}
