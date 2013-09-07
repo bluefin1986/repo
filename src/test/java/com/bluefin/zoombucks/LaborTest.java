@@ -72,7 +72,7 @@ public class LaborTest {
 		ZoomBucksAccount acct0 = new ZoomBucksAccount();
 		acct0.setBirthDateStr("19811101");
 		acct0.setFullName("hookglurey");
-		acct0.setEmail("albin_whoools@hotmail.com");
+		acct0.setEmail("hookglurey@hotmail.com");
 		acct0.setGender("M");
 		acct0.setPassword("baoziazhu609");
 		accountList.add(acct0);
@@ -174,4 +174,29 @@ public class LaborTest {
 		return map;
 	}
 	
+//	@Test
+	public void testLoginIntoHotmail(){
+		WebDriver driver = WebDriverFactory.generateFirefoxDriver();
+		ZoomBucksAccount acct0 = new ZoomBucksAccount();
+		acct0.setBirthDateStr("19811101");
+		acct0.setFullName("hookglurey");
+		acct0.setEmail("hookglurey@hotmail.com");
+		acct0.setGender("M");
+		acct0.setPassword("baoziazhu609");
+		accountList.add(acct0);
+		new ZoomBucksOperator().loginIntoHotmail(driver, acct0);
+	}
+	
+//	@Test
+	public void testSignIntoTaskSite() throws Exception{
+		WebDriver driver = WebDriverFactory.generateFirefoxDriver();
+		ZoomBucksAccount acct0 = new ZoomBucksAccount();
+		acct0.setBirthDateStr("19811101");
+		acct0.setFullName("hookglurey");
+		acct0.setEmail("hookglurey@hotmail.com");
+		acct0.setGender("M");
+		acct0.setPassword("baoziazhu609");
+		accountList.add(acct0);
+		new ZoomBucksOperator().signInToTaskSite(driver, acct0);
+	}
 }

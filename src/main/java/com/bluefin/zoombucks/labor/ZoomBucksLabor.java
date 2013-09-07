@@ -164,6 +164,24 @@ public class ZoomBucksLabor extends Thread {
 					} catch (Exception e) {
 						break;
 					}
+					try {
+						List<WebElement> elements = driver.findElements(By
+								.xpath("//div[@class='hero-unit']/h1"));
+						if (elements.size() > 0) {
+							WebElement ele = elements.get(0);
+							String text = ele.getText();
+							if (text.startsWith("You've")) {
+								throw new Exception("already done!");
+							}
+							System.out.println("text:" + text);
+							if (text.startsWith("There is") || text.startsWith("This task")) {
+								throw new Exception("unknown");
+							}
+						}
+					} catch (Exception e) {
+						System.out.println(e.getMessage());
+						break;
+					}
 					
 					List<WebElement> questionDivs = driver.findElements(By
 							.xpath("//div[@data-validates-regex-flags='i']"));
@@ -176,7 +194,7 @@ public class ZoomBucksLabor extends Thread {
 								inputBox = webElement.findElement(By
 										.tagName("input"));
 								descript = webElement.findElement(By
-										.xpath("span[@class='title]"));
+										.xpath("//span[@class='title']"));
 								String answer = LaborTest.ANSWER_MAP
 										.get(descript.getText());
 								if (answer != null) {
@@ -191,17 +209,21 @@ public class ZoomBucksLabor extends Thread {
 										JOptionPane.showMessageDialog(null,
 												"发现中间插着的");
 									}
-									regexValue = regexValue.substring(0,
-											regexValue.indexOf("([") - 1);
+									regexValue = regexValue.substring(0, regexValue.indexOf("(["));
 									inputBox.sendKeys(regexValue);
+									System.out.println(descript.getText() + " answer is: " + regexValue);
 									LaborTest.ANSWER_MAP.put(
 											descript.getText(), regexValue);
 								}
+								JOptionPane.showMessageDialog(null, "稍等。。");
+								System.out.println();
+								submitButton.click();	
+								break;
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
-							if (JOptionPane
-									.showConfirmDialog(null, "手工检查是否通过?") == JOptionPane.OK_OPTION) {
+							int result = JOptionPane .showConfirmDialog(null, "手工检查是否通过?");
+							if (result == JOptionPane.YES_OPTION) {
 								if (descript != null && inputBox != null) {
 									LaborTest.ANSWER_MAP.put(
 											descript.getText(),
@@ -209,8 +231,7 @@ public class ZoomBucksLabor extends Thread {
 								}
 							}
 						}
-						JOptionPane.showMessageDialog(null, "稍等。。");
-						submitButton.click();
+						
 					}
 				}
 
