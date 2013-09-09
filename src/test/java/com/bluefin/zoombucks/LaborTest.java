@@ -12,7 +12,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 
@@ -69,41 +71,44 @@ public class LaborTest {
 		
 		accountList = new ArrayList<ZoomBucksAccount>();
 		
-		ZoomBucksAccount acct0 = new ZoomBucksAccount();
-		acct0.setBirthDateStr("19811101");
-		acct0.setFullName("hookglurey");
-		acct0.setEmail("hookglurey@hotmail.com");
-		acct0.setGender("M");
-		acct0.setPassword("baoziazhu609");
-		accountList.add(acct0);
+//		ZoomBucksAccount acc
+
+		
 		ZoomBucksAccount acct = new ZoomBucksAccount();
 		acct.setBirthDateStr("19761101");
-		acct.setFullName("hooji_claixor");
-		acct.setEmail("hooji_claixor@hotmail.com");
+		acct.setFullName("holya_brown");
+		acct.setEmail("holya99112@hotmail.com");
 		acct.setGender("M");
 		acct.setPassword("baoziazhu609");
 		accountList.add(acct);
-//		ZoomBucksAccount acct1 = new ZoomBucksAccount();
-//		acct1.setBirthDateStr("19810211");
-//		acct1.setFullName("broono_lawe");
-//		acct1.setEmail("broono_lawe@hotmail.com");
-//		acct1.setGender("F");
-//		acct1.setPassword("baoziazhu609");
-//		accountList.add(acct1);
-//		ZoomBucksAccount acct2 = new ZoomBucksAccount();
-//		acct2.setBirthDateStr("19860511");
-//		acct2.setFullName("james_dingous");
-//		acct2.setEmail("james_dingous@hotmail.com");
-//		acct2.setGender("F");
-//		acct2.setPassword("baoziazhu609");
-//		accountList.add(acct2);
-//		ZoomBucksAccount acct3 = new ZoomBucksAccount();
-//		acct3.setBirthDateStr("19820511");
-//		acct3.setFullName("giibson_proono");
-//		acct3.setEmail("giibson_proono@hotmail.com");
-//		acct3.setGender("F");
-//		acct3.setPassword("baoziazhu609");
-//		accountList.add(acct3);
+		ZoomBucksAccount acct1 = new ZoomBucksAccount();
+		acct1.setBirthDateStr("19810211");
+		acct1.setFullName("sulukiiy_trey");
+		acct1.setEmail("sulukiiy_trey@hotmail.com");
+		acct1.setGender("F");
+		acct1.setPassword("baoziazhu609");
+		accountList.add(acct1);
+		ZoomBucksAccount acct2 = new ZoomBucksAccount();
+		acct2.setBirthDateStr("19860511");
+		acct2.setFullName("queeliance_gow");
+		acct2.setEmail("queeliance_gow@hotmail.com");
+		acct2.setGender("F");
+		acct2.setPassword("baoziazhu609");
+		accountList.add(acct2);
+		ZoomBucksAccount acct3 = new ZoomBucksAccount();
+		acct3.setBirthDateStr("19820511");
+		acct3.setFullName("grosorey_crown");
+		acct3.setEmail("grosorey_crown@hotmail.com");
+		acct3.setGender("F");
+		acct3.setPassword("baoziazhu609");
+		accountList.add(acct3);
+		ZoomBucksAccount acct4 = new ZoomBucksAccount();
+		acct4.setBirthDateStr("19820511");
+		acct4.setFullName("gabino_yosimas");
+		acct4.setEmail("gabino_yosimas@hotmail.com");
+		acct4.setGender("F");
+		acct4.setPassword("baoziazhu609");
+		accountList.add(acct4);
 	}
 	
 	@Test
@@ -198,5 +203,42 @@ public class LaborTest {
 		acct0.setPassword("baoziazhu609");
 		accountList.add(acct0);
 		new ZoomBucksOperator().signInToTaskSite(driver, acct0);
+	}
+	
+//	@Test
+	public void lookingForSearchEngineTasks() throws Exception{
+		WebDriver driver = WebDriverFactory.generateFirefoxDriver();
+		ZoomBucksAccount acct0 = new ZoomBucksAccount();
+		acct0.setBirthDateStr("19811101");
+		acct0.setFullName("kingkay_jiong ");
+		acct0.setEmail("hookglurey@hotmail.com");
+		acct0.setGender("M");
+		acct0.setPassword("baoziazhu609");
+		accountList.add(acct0);
+		ZoomBucksOperator operator = new ZoomBucksOperator();
+		operator.login(driver, acct0);
+		operator.ssoToTaskSite(driver, acct0);
+		String url = "https://tasks.crowdflower.com/channels/zoombucks/tasks/";
+		int beginIndex = 228300;
+		int found = 0;
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 1000; i++) {
+			driver.get(url + beginIndex);
+			beginIndex++;
+			WebElement instr = null;
+			try {
+				instr = driver.findElement(By.id("assignment-instructions")).findElement(By.tagName("div"));
+				System.out.println(instr.getText() + ", " + driver.getCurrentUrl());
+				if("Report to us on the ranking of 3 keyword phrases on Google".equals(instr.getText())){
+					sb.append(driver.getCurrentUrl());
+					sb.append("\n");
+					found++;
+					System.out.println("found searchEngine task: " + found);
+				}
+			} catch (Exception e) {
+				continue;
+			}
+		}
+		FileUtils.writeStringToFile(new File("src/main/resources/newSearchTasks.txt"), sb.toString());
 	}
 }

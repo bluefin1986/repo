@@ -1,10 +1,10 @@
 package com.bluefin.zoombucks.labor;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
@@ -66,7 +66,15 @@ public class SurveySlave extends Thread{
 		By by = By.name("Next");
 		WebElement nextButton;
 		try {
+			Date begin = new Date();
 			while (true) {
+				Date end =  new Date();
+				//survey经常挂掉，超时刷新一下。
+				if(end.getTime() - begin.getTime() >= 60000){
+					driver.get(driver.getCurrentUrl());
+					begin = new Date();
+					continue;
+				}
 				try {
 					nextButton = driver.findElement(by);
 				} catch (Exception e) {

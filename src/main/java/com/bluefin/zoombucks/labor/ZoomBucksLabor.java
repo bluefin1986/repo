@@ -130,9 +130,15 @@ public class ZoomBucksLabor extends Thread {
 
 	private void register() throws Exception {
 		driver.get("http://www.zoombucks.com/");
-		driver.findElement(By.id("email")).sendKeys(zaccount.getEmail());
-		driver.findElement(By.id("fullname")).sendKeys(zaccount.getFullName());
-		driver.findElement(By.id("pswdInput")).sendKeys(zaccount.getPassword());
+		WebElement email = driver.findElement(By.id("email"));
+		email.clear();
+		email.sendKeys(zaccount.getEmail());
+		WebElement fullName = driver.findElement(By.id("fullname"));
+		fullName.clear();
+		fullName.sendKeys(zaccount.getFullName());
+		WebElement pswd = driver.findElement(By.id("pswdInput"));
+		pswd.clear();
+		pswd.sendKeys(zaccount.getPassword());
 		driver.findElement(By.id("accept_terms")).click();
 		driver.findElement(By.xpath("//div[@class='submitbtn']/button"))
 				.click();
@@ -149,6 +155,7 @@ public class ZoomBucksLabor extends Thread {
 
 	public void doShoesTask() {
 		String[] earnUrls = new String[] {
+				"https://tasks.crowdflower.com/channels/zoombucks/tasks/232859",
 				"https://tasks.crowdflower.com/channels/zoombucks/tasks/232860",
 				"https://tasks.crowdflower.com/channels/zoombucks/tasks/232861",
 				"https://tasks.crowdflower.com/channels/zoombucks/tasks/232862",
@@ -193,10 +200,18 @@ public class ZoomBucksLabor extends Thread {
 							if (webElement.isDisplayed()) {
 								inputBox = webElement.findElement(By
 										.tagName("input"));
-								descript = webElement.findElement(By
-										.xpath("//span[@class='title']"));
-								String answer = LaborTest.ANSWER_MAP
+								String answer = null;
+								try {
+									descript = webElement.findElement(By
+										.xpath("label/span[@class='title']"));
+									if(StringUtils.isBlank(descript.getText())){
+										throw new Exception("get desc failed!");
+									}
+									answer = LaborTest.ANSWER_MAP
 										.get(descript.getText());
+								} catch (Exception e) {
+									System.out.println(e.getMessage());
+								}
 								if (answer != null) {
 									inputBox.sendKeys(answer);
 								} else {
@@ -215,8 +230,7 @@ public class ZoomBucksLabor extends Thread {
 									LaborTest.ANSWER_MAP.put(
 											descript.getText(), regexValue);
 								}
-								JOptionPane.showMessageDialog(null, "稍等。。");
-								System.out.println();
+//								JOptionPane.showMessageDialog(null, "稍等。。");
 								submitButton.click();	
 								break;
 							}
@@ -567,16 +581,7 @@ public class ZoomBucksLabor extends Thread {
 		new Select(driver.findElement(By.id("optEmploymentStatusId")))
 				.selectByIndex(4);
 		new Select(driver.findElement(By.id("optIndustryId"))).selectByIndex(8);
-		Thread.sleep(2000);
 		new Select(driver.findElement(By.id("optRoleId"))).selectByIndex(4);
-		Thread.sleep(2000);
-		Select selectJobTitle = new Select(driver.findElement(By
-				.id("optJobTitleId")));
-		int jobTitleSize = selectJobTitle.getOptions().size();
-		if (jobTitleSize == 1) {
-			Thread.sleep(5000);
-		}
-		selectJobTitle.selectByIndex(selectJobTitle.getOptions().size() - 2);
 		Thread.sleep(2000);
 		new Select(driver.findElement(By.id("optMaritalStatusId")))
 				.selectByIndex(2);
@@ -584,6 +589,13 @@ public class ZoomBucksLabor extends Thread {
 				.selectByIndex(10);
 		new Select(driver.findElement(By.id("optMobilePhoneTypeId")))
 				.selectByIndex(2);
+		Select selectJobTitle = new Select(driver.findElement(By
+				.id("optJobTitleId")));
+		int jobTitleSize = selectJobTitle.getOptions().size();
+		if (jobTitleSize == 1) {
+			Thread.sleep(5000);
+		}
+		selectJobTitle.selectByIndex(selectJobTitle.getOptions().size() - 2);
 		driver.findElement(By.id("rdChildrenUnder18_N")).click();
 		driver.findElement(By.name("chbTermsAndConditions")).click();
 		driver.findElement(By.xpath("//input[@type='submit']")).click();

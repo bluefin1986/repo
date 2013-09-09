@@ -63,7 +63,8 @@ public class ZoomBucksOperator implements Operator<ZoomBucksAccount> {
 			boolean needLoginToHotMail = false;
 			WebElement alertContent = driver.findElement(By
 					.xpath("/html/body/div[2]/div/div/p"));
-			if ("Login failed. Username or password is incorrect.".equals(alertContent.getText()) ) {
+			String alertContentStr = alertContent.getText();
+			if ("Login failed. Username or password is incorrect.".equals(alertContentStr) ) {
 				driver.findElement(By.id("auth_central_account_name"))
 						.sendKeys(zaccount.getFullName());
 				driver.findElement(By.id("auth_central_account_email"))
@@ -78,65 +79,115 @@ public class ZoomBucksOperator implements Operator<ZoomBucksAccount> {
 				driver.findElement(By.id("new_auth_central_account")).submit();
 				needLoginToHotMail = true;
 			}
-			if("You must confirm your account before continuing. Check your email for the confirmation link.".equals(alertContent.getText())){
+			if("You must confirm your account before continuing. Check your email for the confirmation link.".equals(alertContentStr)){
 				needLoginToHotMail = true;
 			}
 			if(needLoginToHotMail){
-				loginIntoHotmail(driver, zaccount);
-				while (true) {
-					try {
-						Thread.sleep(10000);
-						List<WebElement> trashLinks = driver.findElements(By
-								.xpath("//a[contains(@title,'垃圾邮件')]"));
-						for (WebElement trashLink : trashLinks) {
-							if(trashLink.isDisplayed() && trashLink.getAttribute("title").startsWith("垃圾邮件")){
-								trashLink.click();
-							}
-						}
-						break;
-					} catch (Exception e) {
-						Thread.sleep(1000);
-						e.printStackTrace();
-						continue;
-					}
+				try {
+					loginIntoHotmail(driver, zaccount);
+				} catch (Exception e) {
+					System.out.println("可能已经登陆成功了，先试试。");
 				}
-				WebElement messageListContainer = driver.findElement(By
-						.id("messageListContentContainer"));
-				List<WebElement> messages = messageListContainer
-						.findElements(By.xpath("div/ul/li"));
-				for (WebElement msg : messages) {
-					WebElement sender = msg.findElement(
-							By.cssSelector("span.Lt")).findElement(
-							By.xpath("span/div/a/span"));
-					WebElement title = msg.findElement(
-							By.cssSelector("span.Sb")).findElement(
-							By.tagName("a"));
-					if ("support@crowdflower.com".equals(sender
-							.getAttribute("email"))) {
-						if ("Confirmation instructions‏"
-								.equals(title.getText())) {
-							while (true) {
-								try {
-									title.click();
-									WebElement msgBody = driver.findElement(By
-											.id("mpf0_readMsgBodyContainer"));
-									WebElement confirmAnchr = msgBody
-											.findElement(By.tagName("a"));
-									driver.get(confirmAnchr
-											.getAttribute("href"));
-								} catch (Exception e) {
-									System.err.println(e.getMessage());
-									continue;
-								}
-							}
-						}
-					}
+				
+				Thread.sleep(10000);
+				if (!confirmCrowdFlowerRegistration(driver)) {
+					openTrashBox(driver);
+					Thread.sleep(8000);
+					confirmCrowdFlowerRegistration(driver);
 				}
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			System.out.println("已经注册过sunflower");
 		}
 
+	}
+	
+	private boolean confirmCrowdFlowerRegistration(WebDriver driver) throws Exception{
+		WebElement messageListContainer = null;
+		while (true) {
+			try {
+				messageListContainer = driver.findElement(By
+						.id("messageListContentContainer"));
+				break;
+			} catch (Exception e) {
+				continue;
+			}
+		}
+		List<WebElement> messages = messageListContainer
+				.findElements(By.xpath("div/ul/li"));
+		boolean foundCrowdFlower = false;
+		for (WebElement msg : messages) {
+			try {
+				msg.findElement(By.xpath("span[@class='Lt']"));
+			} catch (Exception e) {
+				continue;
+			}
+			WebElement sender = msg.findElement(
+					By.xpath("span[@class='Lt']")).findElement(
+					By.xpath("span/div/a/span"));
+			WebElement title = msg.findElement(
+					By.xpath("span[@class='Sb']")).findElement(
+					By.tagName("a"));
+			if ("support@crowdflower.com".equals(sender
+					.getAttribute("email"))) {
+				if ("Confirmation instructions‏"
+						.equals(title.getText())) {
+					WebElement msgBody = null;
+					foundCrowdFlower = true;
+					while (true) {
+						try {
+							title.click();
+							Thread.sleep(5000);
+							msgBody = driver.findElement(By
+									.id("mpf0_readMsgBodyContainer"));
+							break;
+						} catch (Exception e) {
+							System.err.println("click failed : " + e.getMessage());
+							continue;
+						}
+					}
+					if(msgBody != null){
+						WebElement confirmAnchr = msgBody
+								.findElement(By.tagName("a"));
+						driver.get(confirmAnchr
+								.getAttribute("href"));
+						break;
+					}
+					
+				}
+			}
+		}
+		return foundCrowdFlower;
+	}
+	
+	private void openTrashBox(WebDriver driver) throws Exception{
+		int count = 0;
+		boolean trashLinkClicked = false;
+		while (true) {
+			try {
+				Thread.sleep(10000);
+				List<WebElement> trashLinks = driver.findElements(By
+						.xpath("//a[contains(@title,'垃圾邮件')]"));
+				for (WebElement trashLink : trashLinks) {
+					if(trashLink.isDisplayed() && trashLink.getAttribute("title").startsWith("垃圾邮件")){
+						trashLink.click();
+						trashLinkClicked = true;
+						break;
+					}
+				}
+				count++;
+				if(trashLinkClicked || count == 10){
+					break;
+				}
+			} catch (Exception e) {
+				Thread.sleep(1000);
+				e.printStackTrace();
+			}
+		}
+		if(!trashLinkClicked){
+			throw new Exception("activate failed!");
+		}
 	}
 	
 	public void loginIntoHotmail(WebDriver driver, ZoomBucksAccount zaccount){
