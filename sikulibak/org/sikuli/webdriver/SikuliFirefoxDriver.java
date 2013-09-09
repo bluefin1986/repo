@@ -1,20 +1,6 @@
 package org.sikuli.webdriver;
 
-import java.awt.Rectangle;
-import java.io.IOException;
-import java.net.URL;
-
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.sikuli.api.DefaultScreenRegion;
-import org.sikuli.api.ImageTarget;
-import org.sikuli.api.ScreenLocation;
-import org.sikuli.api.ScreenRegion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SikuliFirefoxDriver extends FirefoxDriver {
 

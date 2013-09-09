@@ -17,8 +17,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.Select;
-import org.sikuli.webdriver.ImageElement;
-import org.sikuli.webdriver.SikuliFirefoxDriver;
 
 import com.bluefin.WebDriverFactory;
 import com.bluefin.base.Task;
@@ -231,6 +229,7 @@ public class ZoomBucksLabor extends Thread {
 											descript.getText(), regexValue);
 								}
 //								JOptionPane.showMessageDialog(null, "稍等。。");
+								submitButton = driver.findElement(By.xpath("//input[@type='submit']"));
 								submitButton.click();	
 								break;
 							}
@@ -260,76 +259,76 @@ public class ZoomBucksLabor extends Thread {
 		}
 	}
 
-	public void testWatchVideo() {
-		String earnUrl = "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
-		boolean finished = false;
-		int count = 0;
-		try {
-			WebElement element = driver.findElement(By.id("dob_month"));
-			Select selMonth = new Select(element);
-			selMonth.selectByIndex(5);
-			element = driver.findElement(By.id("dob_day"));
-			Select selDay = new Select(element);
-			selDay.selectByIndex(6);
-			element = driver.findElement(By.id("dob_year"));
-			Select selYear = new Select(element);
-			selYear.selectByIndex(26);
-			driver.findElement(By.id("demosubmitimg")).click();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		while (count < 10 && !finished) {
-			try {
-				driver.get(earnUrl);
-				WebElement bodyContent = driver.findElement(By.tagName("body"));
-				String content = bodyContent.getText();
-				if ("No Videos available.".equals(content.trim())) {
-					break;
-				}
-				try {
-					WebDriver frameDriver = driver.switchTo().frame(0);
-					try {
-						SikuliFirefoxDriver sikuliDriver = (SikuliFirefoxDriver) driver;
-						File playButtonImg = new File(
-								"src/main/resources/imgElements/playButton.png");
-						if (!playButtonImg.exists()) {
-							throw new Exception("file not found");
-						}
-						ImageElement playButton = sikuliDriver
-								.findImageElement(playButtonImg.toURI().toURL());
-						playButton.click();
-						while (true) {
-							List<WebElement> header = frameDriver
-									.findElements(By
-											.xpath("//div[@id='ty_header']"));
-							if (header.size() > 0) {
-								WebElement headerElement = header.get(0);
-								if (!headerElement.getText().startsWith(
-										"You've")) {
-									Thread.sleep(10000);
-									continue;
-								}
-							}
-							break;
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-				// WebElement earnButton =
-				// driver.findElement(By.id("webtraffic_start_button_text"));
-				// earnButton.click();
-				count++;
-			} catch (Exception e) {
-				// TODO: handle exception
-			}
-			System.out.println("2 earned");
-		}
-
-		System.out.println("gogogo");
-	}
+//	public void testWatchVideo() {
+//		String earnUrl = "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
+//		boolean finished = false;
+//		int count = 0;
+//		try {
+//			WebElement element = driver.findElement(By.id("dob_month"));
+//			Select selMonth = new Select(element);
+//			selMonth.selectByIndex(5);
+//			element = driver.findElement(By.id("dob_day"));
+//			Select selDay = new Select(element);
+//			selDay.selectByIndex(6);
+//			element = driver.findElement(By.id("dob_year"));
+//			Select selYear = new Select(element);
+//			selYear.selectByIndex(26);
+//			driver.findElement(By.id("demosubmitimg")).click();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		while (count < 10 && !finished) {
+//			try {
+//				driver.get(earnUrl);
+//				WebElement bodyContent = driver.findElement(By.tagName("body"));
+//				String content = bodyContent.getText();
+//				if ("No Videos available.".equals(content.trim())) {
+//					break;
+//				}
+//				try {
+//					WebDriver frameDriver = driver.switchTo().frame(0);
+//					try {
+//						SikuliFirefoxDriver sikuliDriver = (SikuliFirefoxDriver) driver;
+//						File playButtonImg = new File(
+//								"src/main/resources/imgElements/playButton.png");
+//						if (!playButtonImg.exists()) {
+//							throw new Exception("file not found");
+//						}
+//						ImageElement playButton = sikuliDriver
+//								.findImageElement(playButtonImg.toURI().toURL());
+//						playButton.click();
+//						while (true) {
+//							List<WebElement> header = frameDriver
+//									.findElements(By
+//											.xpath("//div[@id='ty_header']"));
+//							if (header.size() > 0) {
+//								WebElement headerElement = header.get(0);
+//								if (!headerElement.getText().startsWith(
+//										"You've")) {
+//									Thread.sleep(10000);
+//									continue;
+//								}
+//							}
+//							break;
+//						}
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//				} catch (Exception ex) {
+//					ex.printStackTrace();
+//				}
+//				// WebElement earnButton =
+//				// driver.findElement(By.id("webtraffic_start_button_text"));
+//				// earnButton.click();
+//				count++;
+//			} catch (Exception e) {
+//				// TODO: handle exception
+//			}
+//			System.out.println("2 earned");
+//		}
+//
+//		System.out.println("gogogo");
+//	}
 
 	private List<Task> loadTasks(WebElement taskListTable) {
 		List<WebElement> taskListTrs = taskListTable.findElements(By

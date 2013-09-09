@@ -74,13 +74,13 @@ public class LaborTest {
 //		ZoomBucksAccount acc
 
 		
-		ZoomBucksAccount acct = new ZoomBucksAccount();
-		acct.setBirthDateStr("19761101");
-		acct.setFullName("holya_brown");
-		acct.setEmail("holya99112@hotmail.com");
-		acct.setGender("M");
-		acct.setPassword("baoziazhu609");
-		accountList.add(acct);
+//		ZoomBucksAccount acct = new ZoomBucksAccount();
+//		acct.setBirthDateStr("19761101");
+//		acct.setFullName("holya_brown");
+//		acct.setEmail("holya99112@hotmail.com");
+//		acct.setGender("M");
+//		acct.setPassword("baoziazhu609");
+//		accountList.add(acct);
 		ZoomBucksAccount acct1 = new ZoomBucksAccount();
 		acct1.setBirthDateStr("19810211");
 		acct1.setFullName("sulukiiy_trey");
