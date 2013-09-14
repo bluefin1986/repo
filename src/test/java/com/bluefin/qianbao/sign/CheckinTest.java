@@ -12,8 +12,6 @@ import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.safari.SafariDriver;
 
 public class CheckinTest {
@@ -27,9 +25,10 @@ public class CheckinTest {
 	public void init() {
 		driverList = new ArrayList<WebDriver>();
 		for (int i = 0; i < accounts.length; i++) {
-			driverList.add(new FirefoxDriver());
+//			driverList.add(new FirefoxDriver());
 //			driverList.add(new InternetExplorerDriver());
-//			driverList.add(new SafariDriver());
+			driverList.add(new SafariDriver());
+//			driverList.add(new ChromeDriver());
 		}
 	}
 
@@ -95,15 +94,21 @@ public class CheckinTest {
 		driver.findElement(
 				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li[3]/div"))
 				.click();
-//		driver.findElement(
-//				By.xpath("/html/body/div[2]/div/div/div/div[2]/ul/li[3]/div"))
-//				.click();
-		driver.findElement(
-				By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li/div/a"))
-				.click();
-//		driver.findElement(
-//				By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li[2]/div/a"))
-//				.click();
+		try {
+			driver.findElement(
+					By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li/div/a"))
+					.click();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		try {
+			driver.findElement(
+					By.xpath("/html/body/div[2]/div/div/div/div[3]/ul/li[2]/div/a"))
+					.click();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
 		Thread.sleep(1000);
 		// new CloseWindows(driver).start();
 		Set<String> windows = driver.getWindowHandles();

@@ -89,10 +89,30 @@ public class ZoomBucksLabor extends Thread {
 		// } catch (Exception e) {
 		// e.printStackTrace();
 		// }
+//		try {
+//			registerPeanuts();
+//		} catch (Exception e) {
+//			System.out.println("peanuts account already actived。");
+//		}
 		try {
-			registerPeanuts();
+			doFlowerTask();
 		} catch (Exception e) {
-			System.out.println("peanuts account already actived。");
+			e.printStackTrace();
+		}
+		try {
+			doProductBrandTask();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			doProductNameTask();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			doProductPriceTask();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		try {
 			doShoesTask();
@@ -150,6 +170,142 @@ public class ZoomBucksLabor extends Thread {
 		driver.findElement(By.tagName("form")).submit();
 		Thread.sleep(5000);
 	}
+	
+	private WebElement getCrowdFlowerTaskSubmitBtn(WebDriver driver){
+		if (!isCrowdFlowerTaskAvaliable(driver)) {
+			return null;
+		}
+		WebElement submitButton = null;
+		try {
+			submitButton = driver.findElement(By
+					.xpath("//input[@type='submit']"));
+			return submitButton;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private boolean isCrowdFlowerTaskAvaliable(WebDriver driver) {
+		try {
+			List<WebElement> elements = driver.findElements(By
+					.xpath("//div[@class='hero-unit']/h1"));
+			if (elements.size() > 0) {
+				WebElement ele = elements.get(0);
+				String text = ele.getText();
+				if (text.startsWith("You've")) {
+					throw new Exception("already done!");
+				}
+				System.out.println("text:" + text);
+				if (text.startsWith("There is") || text.startsWith("This task")) {
+					throw new Exception("unknown");
+				}
+			}
+			return true;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return false;
+		}
+	}
+
+	public void doProductNameTask() throws Exception {
+		String taskName = "Get Name of Product";
+		String answerMapFile = "src/main/resources/productNameAnswers.txt";
+		operator.ssoToTaskSite(driver, zaccount);
+		List<Task> tasksOnPage = loadTasks(taskName);
+		List<Task> tasks = loadTasksFromFile(
+				"src/main/resources/productNameUrls.txt", taskName);
+		Map<String, String> answerMap = LaborTest.loadAnswerMap(answerMapFile);
+		for (Task task : tasks) {
+			if (tasksOnPage.contains(task)) {
+				tasksOnPage.remove(task);
+			}
+			fillAnswerForProduct(task, answerMap);
+		}
+		for (Task task : tasksOnPage) {
+			fillAnswerForProduct(task, answerMap);
+		}
+		saveMap(answerMap, answerMapFile);
+	}
+	public void doProductPriceTask() throws Exception {
+		String taskName = "Get Price of Product";
+		String answerMapFile = "src/main/resources/productPriceAnswers.txt";
+		operator.ssoToTaskSite(driver, zaccount);
+		List<Task> tasksOnPage = loadTasks(taskName);
+		List<Task> tasks = loadTasksFromFile(
+				"src/main/resources/productPriceUrls.txt", taskName);
+		Map<String, String> answerMap = LaborTest.loadAnswerMap(answerMapFile);
+		for (Task task : tasks) {
+			if (tasksOnPage.contains(task)) {
+				tasksOnPage.remove(task);
+			}
+			fillAnswerForProduct(task, answerMap);
+		}
+		for (Task task : tasksOnPage) {
+			fillAnswerForProduct(task, answerMap);
+		}
+		saveMap(answerMap, answerMapFile);
+	}
+	public void doProductBrandTask() throws Exception {
+		String taskName = "Get Brand of Product";
+		String answerMapFile = "src/main/resources/productBrandAnswers.txt";
+		operator.ssoToTaskSite(driver, zaccount);
+		List<Task> tasksOnPage = loadTasks(taskName);
+		List<Task> tasks = loadTasksFromFile(
+				"src/main/resources/productBrandUrls.txt", taskName);
+		Map<String, String> answerMap = LaborTest.loadAnswerMap(answerMapFile);
+		for (Task task : tasks) {
+			if (tasksOnPage.contains(task)) {
+				tasksOnPage.remove(task);
+			}
+			fillAnswerForProduct(task, answerMap);
+		}
+		for (Task task : tasksOnPage) {
+			fillAnswerForProduct(task, answerMap);
+		}
+		saveMap(answerMap, answerMapFile);
+	}
+
+	private void fillAnswerForProduct(Task task, Map<String, String> answerMap)
+			throws Exception {
+		try {
+			driver.get(task.getTaskHref());
+			WebElement submitButton = getCrowdFlowerTaskSubmitBtn(driver);
+			if(submitButton == null){
+				return;
+			}
+			WebElement jobunit = driver.findElement(By.id("job_units"));
+			List<WebElement> jobs = jobunit.findElements(By
+					.xpath("div[@class='cml jsawesome']"));
+			for (WebElement job : jobs) {
+				WebElement questionUrl = job.findElement(By.xpath("p/a"));
+				WebElement input = job.findElement(By.tagName("input"));
+				String answer = answerMap.get(questionUrl.getAttribute("href"));
+				if (answer != null) {
+					input.sendKeys(answer);
+				} else {
+					JOptionPane.showMessageDialog(null, "这题没答案，手工填写下！");
+					answerMap.put(questionUrl.getAttribute("href"),
+							input.getAttribute("value"));
+				}
+			}
+			submitButton.click();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private List<Task> loadTasksFromFile(String path, String taskName)
+			throws Exception {
+		List<Task> tasks = new ArrayList<Task>();
+		String content = FileUtils.readFileToString(new File(path));
+		String[] urlArray = content.split("\n");
+		for (String url : urlArray) {
+			Task task = new Task(taskName, url, 6);
+			tasks.add(task);
+		}
+		return tasks;
+	}
 
 	public void doShoesTask() {
 		String[] earnUrls = new String[] {
@@ -165,29 +321,14 @@ public class ZoomBucksLabor extends Thread {
 				while (true) {
 					WebElement submitButton = null;
 					try {
-						submitButton = driver.findElement(By.xpath("//input[@type='submit']"));
+						submitButton = driver.findElement(By
+								.xpath("//input[@type='submit']"));
 					} catch (Exception e) {
 						break;
 					}
-					try {
-						List<WebElement> elements = driver.findElements(By
-								.xpath("//div[@class='hero-unit']/h1"));
-						if (elements.size() > 0) {
-							WebElement ele = elements.get(0);
-							String text = ele.getText();
-							if (text.startsWith("You've")) {
-								throw new Exception("already done!");
-							}
-							System.out.println("text:" + text);
-							if (text.startsWith("There is") || text.startsWith("This task")) {
-								throw new Exception("unknown");
-							}
-						}
-					} catch (Exception e) {
-						System.out.println(e.getMessage());
+					if (!isCrowdFlowerTaskAvaliable(driver)) {
 						break;
 					}
-					
 					List<WebElement> questionDivs = driver.findElements(By
 							.xpath("//div[@data-validates-regex-flags='i']"));
 					for (WebElement webElement : questionDivs) {
@@ -200,13 +341,14 @@ public class ZoomBucksLabor extends Thread {
 										.tagName("input"));
 								String answer = null;
 								try {
-									descript = webElement.findElement(By
-										.xpath("label/span[@class='title']"));
-									if(StringUtils.isBlank(descript.getText())){
+									descript = webElement
+											.findElement(By
+													.xpath("label/span[@class='title']"));
+									if (StringUtils.isBlank(descript.getText())) {
 										throw new Exception("get desc failed!");
 									}
-									answer = LaborTest.ANSWER_MAP
-										.get(descript.getText());
+									answer = LaborTest.ANSWER_MAP.get(descript
+											.getText());
 								} catch (Exception e) {
 									System.out.println(e.getMessage());
 								}
@@ -222,20 +364,24 @@ public class ZoomBucksLabor extends Thread {
 										JOptionPane.showMessageDialog(null,
 												"发现中间插着的");
 									}
-									regexValue = regexValue.substring(0, regexValue.indexOf("(["));
+									regexValue = regexValue.substring(0,
+											regexValue.indexOf("(["));
 									inputBox.sendKeys(regexValue);
-									System.out.println(descript.getText() + " answer is: " + regexValue);
+									System.out.println(descript.getText()
+											+ " answer is: " + regexValue);
 									LaborTest.ANSWER_MAP.put(
 											descript.getText(), regexValue);
 								}
-//								JOptionPane.showMessageDialog(null, "稍等。。");
-								submitButton = driver.findElement(By.xpath("//input[@type='submit']"));
-								submitButton.click();	
+								// JOptionPane.showMessageDialog(null, "稍等。。");
+								submitButton = driver.findElement(By
+										.xpath("//input[@type='submit']"));
+								submitButton.click();
 								break;
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
-							int result = JOptionPane .showConfirmDialog(null, "手工检查是否通过?");
+							int result = JOptionPane.showConfirmDialog(null,
+									"手工检查是否通过?");
 							if (result == JOptionPane.YES_OPTION) {
 								if (descript != null && inputBox != null) {
 									LaborTest.ANSWER_MAP.put(
@@ -244,7 +390,7 @@ public class ZoomBucksLabor extends Thread {
 								}
 							}
 						}
-						
+
 					}
 				}
 
@@ -253,84 +399,128 @@ public class ZoomBucksLabor extends Thread {
 			e.printStackTrace();
 		}
 		try {
-			saveMap(LaborTest.ANSWER_MAP);
+			saveMap(LaborTest.ANSWER_MAP, "src/main/resources/answers.txt");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-//	public void testWatchVideo() {
-//		String earnUrl = "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
-//		boolean finished = false;
-//		int count = 0;
-//		try {
-//			WebElement element = driver.findElement(By.id("dob_month"));
-//			Select selMonth = new Select(element);
-//			selMonth.selectByIndex(5);
-//			element = driver.findElement(By.id("dob_day"));
-//			Select selDay = new Select(element);
-//			selDay.selectByIndex(6);
-//			element = driver.findElement(By.id("dob_year"));
-//			Select selYear = new Select(element);
-//			selYear.selectByIndex(26);
-//			driver.findElement(By.id("demosubmitimg")).click();
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		while (count < 10 && !finished) {
-//			try {
-//				driver.get(earnUrl);
-//				WebElement bodyContent = driver.findElement(By.tagName("body"));
-//				String content = bodyContent.getText();
-//				if ("No Videos available.".equals(content.trim())) {
-//					break;
-//				}
-//				try {
-//					WebDriver frameDriver = driver.switchTo().frame(0);
-//					try {
-//						SikuliFirefoxDriver sikuliDriver = (SikuliFirefoxDriver) driver;
-//						File playButtonImg = new File(
-//								"src/main/resources/imgElements/playButton.png");
-//						if (!playButtonImg.exists()) {
-//							throw new Exception("file not found");
-//						}
-//						ImageElement playButton = sikuliDriver
-//								.findImageElement(playButtonImg.toURI().toURL());
-//						playButton.click();
-//						while (true) {
-//							List<WebElement> header = frameDriver
-//									.findElements(By
-//											.xpath("//div[@id='ty_header']"));
-//							if (header.size() > 0) {
-//								WebElement headerElement = header.get(0);
-//								if (!headerElement.getText().startsWith(
-//										"You've")) {
-//									Thread.sleep(10000);
-//									continue;
-//								}
-//							}
-//							break;
-//						}
-//					} catch (Exception e) {
-//						e.printStackTrace();
-//					}
-//				} catch (Exception ex) {
-//					ex.printStackTrace();
-//				}
-//				// WebElement earnButton =
-//				// driver.findElement(By.id("webtraffic_start_button_text"));
-//				// earnButton.click();
-//				count++;
-//			} catch (Exception e) {
-//				// TODO: handle exception
-//			}
-//			System.out.println("2 earned");
-//		}
-//
-//		System.out.println("gogogo");
-//	}
+	public void doFlowerTask() {
+		String[] earnUrls = new String[] { "https://tasks.crowdflower.com/channels/zoombucks/tasks/221774" };
+		try {
+			operator.ssoToTaskSite(driver, zaccount);
+			for (String url : earnUrls) {
+				driver.get(url);
+				while (true) {
+					WebElement submitButton = null;
+					try {
+						submitButton = driver.findElement(By
+								.xpath("//input[@type='submit']"));
+					} catch (Exception e) {
+						break;
+					}
+					if (!isCrowdFlowerTaskAvaliable(driver)) {
+						break;
+					}
+					WebElement form = driver.findElement(By.id("job_units"));
+					List<WebElement> units = form.findElements(By
+							.xpath("div[@class='cml jsawesome']"));
+					for (WebElement unit : units) {
+						WebElement imgUrl = unit.findElement(By.tagName("p"));
+						WebElement input = unit
+								.findElement(By.tagName("input"));
+						if ("http://www.ics.uci.edu/~qliu1/PDF/how_many_photos/howmany_4.jpg"
+								.equals(imgUrl.getText().trim())) {
+							input.sendKeys("61");
+						} else {
+							input.sendKeys("21");
+						}
+					}
+					submitButton.submit();
+				}
+			}
 
-	private List<Task> loadTasks(WebElement taskListTable) {
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	// public void testWatchVideo() {
+	// String earnUrl =
+	// "http://www.zoombucks.com/includes/video_homepage.php?reward=2%20ZBucks";
+	// boolean finished = false;
+	// int count = 0;
+	// try {
+	// WebElement element = driver.findElement(By.id("dob_month"));
+	// Select selMonth = new Select(element);
+	// selMonth.selectByIndex(5);
+	// element = driver.findElement(By.id("dob_day"));
+	// Select selDay = new Select(element);
+	// selDay.selectByIndex(6);
+	// element = driver.findElement(By.id("dob_year"));
+	// Select selYear = new Select(element);
+	// selYear.selectByIndex(26);
+	// driver.findElement(By.id("demosubmitimg")).click();
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// }
+	// while (count < 10 && !finished) {
+	// try {
+	// driver.get(earnUrl);
+	// WebElement bodyContent = driver.findElement(By.tagName("body"));
+	// String content = bodyContent.getText();
+	// if ("No Videos available.".equals(content.trim())) {
+	// break;
+	// }
+	// try {
+	// WebDriver frameDriver = driver.switchTo().frame(0);
+	// try {
+	// SikuliFirefoxDriver sikuliDriver = (SikuliFirefoxDriver) driver;
+	// File playButtonImg = new File(
+	// "src/main/resources/imgElements/playButton.png");
+	// if (!playButtonImg.exists()) {
+	// throw new Exception("file not found");
+	// }
+	// ImageElement playButton = sikuliDriver
+	// .findImageElement(playButtonImg.toURI().toURL());
+	// playButton.click();
+	// while (true) {
+	// List<WebElement> header = frameDriver
+	// .findElements(By
+	// .xpath("//div[@id='ty_header']"));
+	// if (header.size() > 0) {
+	// WebElement headerElement = header.get(0);
+	// if (!headerElement.getText().startsWith(
+	// "You've")) {
+	// Thread.sleep(10000);
+	// continue;
+	// }
+	// }
+	// break;
+	// }
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// }
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// }
+	// // WebElement earnButton =
+	// // driver.findElement(By.id("webtraffic_start_button_text"));
+	// // earnButton.click();
+	// count++;
+	// } catch (Exception e) {
+	// // TODO: handle exception
+	// }
+	// System.out.println("2 earned");
+	// }
+	//
+	// System.out.println("gogogo");
+	// }
+
+	private List<Task> loadTasks(String targetTaskDesc) {
+		WebElement taskListTable = driver.findElement(By
+				.xpath("//table[@class='task-listing']"));
 		List<WebElement> taskListTrs = taskListTable.findElements(By
 				.xpath("tbody/tr"));
 		List<Task> tasks = new ArrayList<Task>();
@@ -339,7 +529,7 @@ public class ZoomBucksLabor extends Thread {
 					.xpath("td[1]/hgroup/a/h1"));
 			WebElement taskDesc = taskTr.findElement(By
 					.xpath("td[2]/section/h1/a"));
-			if (taskDesc.getText().trim().startsWith("Find the search engine")) {
+			if (taskDesc.getText().trim().startsWith(targetTaskDesc)) {
 				int bonus = Integer.parseInt(bonusValue.getText());
 				Task tsk = new Task(taskDesc.getText(),
 						taskDesc.getAttribute("href"), bonus);
@@ -372,9 +562,8 @@ public class ZoomBucksLabor extends Thread {
 			} catch (Exception e) {
 			}
 		}
-		WebElement taskListTable = driver.findElement(By
-				.xpath("//table[@class='task-listing']"));
-		List<Task> tasks = loadTasks(taskListTable);
+
+		List<Task> tasks = loadTasks("Find the search engine");
 		// List<String> taskUrls = loadTaskUrls(taskListTable);
 		// 载入预置的所有task列表
 		Map<String, Task> goingOnTaskMap = new HashMap<String, Task>();
@@ -383,9 +572,7 @@ public class ZoomBucksLabor extends Thread {
 		for (String href : pageHrefs) {
 			driver.get(href);
 			Thread.sleep(4000);
-			taskListTable = driver.findElement(By
-					.xpath("//table[@class='task-listing']"));
-			tasks.addAll(loadTasks(taskListTable));
+			tasks.addAll(loadTasks("Find the search engine"));
 			// taskUrls.addAll(loadTaskUrls(taskListTable));
 		}
 		// 筛除已显示的
@@ -653,7 +840,8 @@ public class ZoomBucksLabor extends Thread {
 		this.silentMode = true;
 	}
 
-	public static void saveMap(Map<String, String> answerMap) throws Exception {
+	public static void saveMap(Map<String, String> answerMap, String path)
+			throws Exception {
 		StringBuilder sb = new StringBuilder();
 
 		for (Iterator<String> iterator = answerMap.keySet().iterator(); iterator
@@ -664,15 +852,13 @@ public class ZoomBucksLabor extends Thread {
 			sb.append(answerMap.get(question));
 			sb.append("\n");
 		}
-		FileUtils.writeStringToFile(new File("src/main/resources/answers.txt"),
-				sb.toString(), false);
+		FileUtils.writeStringToFile(new File(path), sb.toString(), false);
 	}
 
-	public static Map<String, Task> loadTaskMap() {
+	public static Map<String, Task> loadTaskMap(String path) {
 		Map<String, Task> map = new HashMap<String, Task>();
 		try {
-			String content = FileUtils.readFileToString(new File(
-					"src/main/resources/tasks.txt"));
+			String content = FileUtils.readFileToString(new File(path));
 			content = content.replace("now:", "");
 			String[] urls = content.split("\n");
 			for (int i = 0; i < urls.length; i++) {

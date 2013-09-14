@@ -66,49 +66,50 @@ public class LaborTest {
 	
 	@Before
 	public void init() throws IOException {
-		LaborTest.ANSWER_MAP = loadAnswerMap();
-		taskMap = ZoomBucksLabor.loadTaskMap();
+		LaborTest.ANSWER_MAP = loadAnswerMap("src/main/resources/answers.txt");
+		taskMap = ZoomBucksLabor.loadTaskMap("src/main/resources/tasks.txt");
 		
 		accountList = new ArrayList<ZoomBucksAccount>();
 		
 //		ZoomBucksAccount acc
 
 		
-//		ZoomBucksAccount acct = new ZoomBucksAccount();
-//		acct.setBirthDateStr("19761101");
-//		acct.setFullName("holya_brown");
-//		acct.setEmail("holya99112@hotmail.com");
-//		acct.setGender("M");
-//		acct.setPassword("baoziazhu609");
-//		accountList.add(acct);
+		ZoomBucksAccount acct = new ZoomBucksAccount();
+		acct.setBirthDateStr("19761101");
+		acct.setFullName("giipon_song");
+		acct.setEmail("giipon_song@outlook.com");
+		acct.setGender("M");
+		acct.setPassword("baoziazhu609");
+		accountList.add(acct);
 		ZoomBucksAccount acct1 = new ZoomBucksAccount();
 		acct1.setBirthDateStr("19810211");
-		acct1.setFullName("sulukiiy_trey");
-		acct1.setEmail("sulukiiy_trey@hotmail.com");
+		acct1.setFullName("thusony_jay");
+		acct1.setEmail("thusony_jay@hotmail.com");
 		acct1.setGender("F");
 		acct1.setPassword("baoziazhu609");
 		accountList.add(acct1);
-		ZoomBucksAccount acct2 = new ZoomBucksAccount();
-		acct2.setBirthDateStr("19860511");
-		acct2.setFullName("queeliance_gow");
-		acct2.setEmail("queeliance_gow@hotmail.com");
-		acct2.setGender("F");
-		acct2.setPassword("baoziazhu609");
-		accountList.add(acct2);
-		ZoomBucksAccount acct3 = new ZoomBucksAccount();
-		acct3.setBirthDateStr("19820511");
-		acct3.setFullName("grosorey_crown");
-		acct3.setEmail("grosorey_crown@hotmail.com");
-		acct3.setGender("F");
-		acct3.setPassword("baoziazhu609");
-		accountList.add(acct3);
-		ZoomBucksAccount acct4 = new ZoomBucksAccount();
-		acct4.setBirthDateStr("19820511");
-		acct4.setFullName("gabino_yosimas");
-		acct4.setEmail("gabino_yosimas@hotmail.com");
-		acct4.setGender("F");
-		acct4.setPassword("baoziazhu609");
-		accountList.add(acct4);
+//		ZoomBucksAccount acct2 = new ZoomBucksAccount();
+//		acct2.setBirthDateStr("19860511");
+//		acct2.setFullName("roukia_julee");
+//		acct2.setEmail("roukia_julee@outlook.com");
+//		acct2.setGender("F");
+//		acct2.setPassword("baoziazhu609");
+//		accountList.add(acct2);
+//		ZoomBucksAccount acct3 = new ZoomBucksAccount();
+//		acct3.setBirthDateStr("19820511");
+//		acct3.setFullName("filosefor_lion");
+//		acct3.setEmail("filosefor_lion@outlook.com");
+//		acct3.setGender("F");
+//		acct3.setPassword("baoziazhu609");
+//		accountList.add(acct3);
+//		ZoomBucksAccount acct4 = new ZoomBucksAccount();
+//		acct4.setBirthDateStr("19820511");
+//		acct4.setFullName("thronson_law");
+//		acct4.setEmail("thronson_law@outlook.com");
+//		acct4.setGender("F");
+//		acct4.setPassword("baoziazhu609");
+//		accountList.add(acct4);
+		
 	}
 	
 	@Test
@@ -160,11 +161,10 @@ public class LaborTest {
 		}
 	}
 	
-	public Map<String, String> loadAnswerMap() {
+	public static Map<String, String> loadAnswerMap(String answerFilePath) {
 		Map<String, String> map = new HashMap<String, String>();
 		try {
-			String content = FileUtils.readFileToString(new File(
-					"src/main/resources/answers.txt"));
+			String content = FileUtils.readFileToString(new File(answerFilePath));
 			String[] answers = content.split("\n");
 			for (String answer : answers) {
 				if(StringUtils.isBlank(answer)){

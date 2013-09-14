@@ -48,5 +48,10 @@ public class Task implements Comparable<Task>{
 		return 0;
 	}
 	
+	public boolean equals(Object obj){
+		Task task = (Task)obj;
+		
+		return this.getTaskHref().equals(task.getTaskHref());
+	}
 	
 }
