@@ -89,11 +89,11 @@ public class ZoomBucksLabor extends Thread {
 		// } catch (Exception e) {
 		// e.printStackTrace();
 		// }
-//		try {
-//			registerPeanuts();
-//		} catch (Exception e) {
-//			System.out.println("peanuts account already actived。");
-//		}
+		try {
+			registerPeanuts();
+		} catch (Exception e) {
+			System.out.println("peanuts account already actived。");
+		}
 		try {
 			doFlowerTask();
 		} catch (Exception e) {
